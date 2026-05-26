@@ -97,14 +97,6 @@ export default function Footer() {
               <a href="#" className="text-white/60 hover:text-primary transition font-semibold text-xs">Cookies</a>
             </div>
           </div>
-          <div className="text-center">
-            <p className="text-white/50 text-xs font-semibold">
-              Developed by{' '}
-              <a href="https://tinzwave.com" target="_blank" rel="noopener noreferrer" className="text-accent hover:text-white transition font-bold">
-                Tinzwave Technology
-              </a>
-            </p>
-          </div>
         </div>
       </div>
     </footer>

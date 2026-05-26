@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 90" width="220" height="90">
+  <rect width="220" height="90" fill="white"/>
+  <!-- Eagle body -->
+  <g transform="translate(10,5)">
+    <!-- Globe -->
+    <circle cx="38" cy="68" r="18" fill="#2E7D32" stroke="#1B5E20" stroke-width="1.5"/>
+    <ellipse cx="38" cy="68" rx="18" ry="9" fill="none" stroke="#1B5E20" stroke-width="1"/>
+    <line x1="20" y1="68" x2="56" y2="68" stroke="#1B5E20" stroke-width="1"/>
+    <ellipse cx="32" cy="68" rx="7" ry="18" fill="none" stroke="#4CAF50" stroke-width="0.8" opacity="0.6"/>
+    <!-- Eagle wings -->
+    <path d="M10,45 Q25,20 38,30 Q30,42 38,50" fill="#6B2D0F" stroke="#4A1F08" stroke-width="0.8"/>
+    <path d="M66,45 Q51,20 38,30 Q46,42 38,50" fill="#6B2D0F" stroke="#4A1F08" stroke-width="0.8"/>
+    <!-- Eagle body/tail -->
+    <path d="M30,30 Q38,55 28,68 Q38,58 48,68 Q38,55 46,30 Z" fill="#8B3A10" stroke="#4A1F08" stroke-width="0.8"/>
+    <!-- Eagle head -->
+    <ellipse cx="38" cy="22" rx="8" ry="9" fill="#8B3A10" stroke="#4A1F08" stroke-width="0.8"/>
+    <!-- Beak -->
+    <path d="M38,26 L44,29 L38,31 Z" fill="#FF8F00"/>
+    <!-- Eye -->
+    <circle cx="41" cy="21" r="2" fill="#FF8F00"/>
+    <circle cx="42" cy="20.5" r="0.8" fill="#333"/>
+  </g>
+  <!-- Delta text -->
+  <text x="145" y="52" font-family="Georgia, Times New Roman, serif" font-style="italic" font-weight="bold" font-size="42" fill="#E65100" text-anchor="middle">Delta</text>
+</svg>

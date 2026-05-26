@@ -1,22 +1,11 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X, ChevronDown, ShoppingCart } from 'lucide-react';
+import { useCart } from '@/hooks/use-cart';
 import Image from 'next/image';
-
-const products = [
-  { name: 'Cable Trays & Ladders', href: '/products/cable-trays' },
-  { name: 'Cable Lugs', href: '/products/cable-lugs' },
-  { name: 'Earth Rods & Earthing Systems', href: '/products/earth-rods' },
-  { name: 'Circuit Breakers', href: '/products/circuit-breakers' },
-  { name: 'Conduit Pipes & Fittings', href: '/products/conduits' },
-  { name: 'Tinned Copper Busbars', href: '/products/busbars' },
-  { name: 'Lightning Arrestors', href: '/products/lightning-arrestors' },
-  { name: 'Wiring Devices', href: '/products/wiring-devices' },
-  { name: 'Inspection Chambers', href: '/products/inspection-chambers' },
-  { name: 'Solar Materials', href: '/products/solar-materials' },
-];
+import { products as productList } from '@/lib/products';
 
 const industries = [
   { name: 'Oil & Gas', href: '/industries/oil-gas' },
@@ -34,6 +23,10 @@ export default function Header() {
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
+  const { totalItems } = useCart();
+
+  const categories = Array.from(new Set(productList.map((p) => p.category)));
+
   return (
     <header className="sticky top-0 z-50 bg-white border-b-2 border-primary shadow-lg">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
@@ -50,19 +43,23 @@ export default function Header() {
 
           {/* Products Dropdown */}
           <div className="relative group">
-            <button className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 flex items-center gap-1 group-hover:bg-blue-50 rounded-lg">
-              Products
-              <ChevronDown size={16} className="group-hover:rotate-180 transition" />
-            </button>
-            <div className="absolute left-0 mt-0 w-80 bg-white border-2 border-primary/20 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-3 top-full z-50">
+            <div className="flex items-center gap-1">
+              <Link href="/products" className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 hover:bg-blue-50 rounded-lg">Products</Link>
+              <button className="px-2 py-2 text-foreground/80 hover:text-primary transition rounded-lg">
+                <ChevronDown size={16} className="group-hover:rotate-180 transition" />
+              </button>
+            </div>
+
+            <div className="absolute left-0 mt-0 w-64 bg-white border-2 border-primary/20 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-3 top-full z-50">
               <div className="grid grid-cols-1 gap-1">
-                {products.map((product) => (
+                <Link href="/products" className="block px-3 py-2 text-foreground hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 hover:text-primary rounded-lg transition border-l-3 border-transparent hover:border-accent font-semibold text-sm">All Products</Link>
+                {categories.map((cat) => (
                   <Link
-                    key={product.name}
-                    href={product.href}
+                    key={cat}
+                    href={`/products?category=${encodeURIComponent(cat)}`}
                     className="block px-3 py-2 text-foreground hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 hover:text-primary rounded-lg transition border-l-3 border-transparent hover:border-accent font-semibold text-sm"
                   >
-                    {product.name}
+                    {cat}
                   </Link>
                 ))}
               </div>
@@ -100,6 +97,16 @@ export default function Header() {
           <Link href="/contact" className="px-5 py-2 bg-accent text-white rounded-lg hover:bg-red-600 transition font-bold text-sm shadow-lg hover:shadow-xl ml-2">
             Get Quote
           </Link>
+
+          {/* Cart */}
+          <Link href="/cart" className="ml-3 px-3 py-2 text-foreground font-bold hover:text-primary transition text-sm flex items-center gap-2">
+            <ShoppingCart size={18} />
+            {totalItems > 0 && (
+              <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-accent text-white">
+                {totalItems}
+              </span>
+            )}
+          </Link>
         </div>
 
         {/* Mobile Menu Button */}
@@ -116,7 +123,7 @@ export default function Header() {
             
             <Link href="/about" className="block text-foreground font-bold text-base hover:text-primary transition py-2 border-b border-blue-50" onClick={toggleMenu}>About</Link>
 
-            {/* Products Mobile */}
+            {/* Products Mobile - categories */}
             <div>
               <button onClick={() => setProductsOpen(!productsOpen)} className="w-full text-left text-foreground font-bold text-base flex items-center justify-between py-2 border-b border-blue-50">
                 Products
@@ -124,9 +131,10 @@ export default function Header() {
               </button>
               {productsOpen && (
                 <div className="space-y-1 py-2 pl-3">
-                  {products.map((product) => (
-                    <Link key={product.name} href={product.href} className="block text-foreground hover:text-primary font-medium text-sm py-2" onClick={toggleMenu}>
-                      {product.name}
+                  <Link href="/products" className="block text-foreground hover:text-primary font-medium text-sm py-2" onClick={toggleMenu}>All Products</Link>
+                  {categories.map((cat) => (
+                    <Link key={cat} href={`/products?category=${encodeURIComponent(cat)}`} className="block text-foreground hover:text-primary font-medium text-sm py-2" onClick={toggleMenu}>
+                      {cat}
                     </Link>
                   ))}
                 </div>
@@ -158,6 +166,10 @@ export default function Header() {
             {/* Get Quote Button - Mobile */}
             <Link href="/contact" className="block w-full text-center px-4 py-2.5 bg-accent text-white rounded-lg hover:bg-red-600 transition font-bold text-sm shadow-lg mt-4" onClick={toggleMenu}>
               Get Quote
+            </Link>
+
+            <Link href="/cart" className="block w-full text-center px-4 py-2.5 bg-white text-foreground rounded-lg border border-primary mt-3 font-bold" onClick={toggleMenu}>
+              View Cart
             </Link>
           </div>
         </div>

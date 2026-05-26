@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="280" height="80">
+  <rect width="280" height="80" fill="white"/>
+  <rect x="4" y="8" width="272" height="64" rx="3" fill="#F9F9F9" stroke="#CCCCCC" stroke-width="1"/>
+  <text x="140" y="34" font-family="Arial Black" font-weight="900" font-size="20" fill="#CC0000" text-anchor="middle">kabelmetal</text>
+  <text x="140" y="54" font-family="Arial Black" font-weight="900" font-size="16" fill="#444" text-anchor="middle">NIGERIA</text>
+  <text x="140" y="67" font-family="Arial" font-size="9" fill="#888" text-anchor="middle">a Nexans affiliated company</text>
+</svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="280" height="80">
+  <rect width="280" height="80" fill="white"/>
+  <rect x="5" y="8" width="54" height="64" rx="3" fill="#CC0000"/>
+  <rect x="5" y="43" width="54" height="10" fill="#1565C0"/>
+  <text x="32" y="41" font-family="Arial Black" font-weight="900" font-size="22" fill="white" text-anchor="middle">NG</text>
+  <text x="168" y="28" font-family="Arial Black" font-weight="900" font-size="19" fill="#CC0000" text-anchor="middle">NIGERCHIN</text>
+  <rect x="70" y="33" width="196" height="3" fill="#1565C0"/>
+  <text x="168" y="50" font-family="Arial" font-size="11" fill="#333" text-anchor="middle">WIRE AND CABLE</text>
+  <text x="168" y="64" font-family="Arial" font-size="9" fill="#666" text-anchor="middle">NIGERCHIN ELECTRICAL DEV. CO. LTD.</text>
+</svg>

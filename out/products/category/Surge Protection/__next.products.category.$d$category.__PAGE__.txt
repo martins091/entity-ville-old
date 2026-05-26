@@ -1,0 +1,7 @@
+1:"$Sreact.fragment"
+2:I[3166,["/_next/static/chunks/0bi47d-rje44~.js","/_next/static/chunks/0_879ixarc_93.js","/_next/static/chunks/0.6vhh2kzffr-.js","/_next/static/chunks/0oewz67nrl-kc.js"],"default"]
+4:I[97367,["/_next/static/chunks/0bi47d-rje44~.js","/_next/static/chunks/0_879ixarc_93.js"],"OutletBoundary"]
+5:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"params":"$@3"}],[["$","script","script-0",{"src":"/_next/static/chunks/0.6vhh2kzffr-.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/0oewz67nrl-kc.js","async":true}]],["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"nunS1SHQeXWh_Ibu56Vrw"}
+3:{"category":"Surge%20Protection"}
+6:null
