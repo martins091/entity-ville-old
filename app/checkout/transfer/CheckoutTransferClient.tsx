@@ -5,27 +5,31 @@ import Link from 'next/link';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { useCart } from '@/hooks/use-cart';
+import { getStoredOrder, notifyTransfer, type StoredOrder } from '@/lib/supabase/orders';
 
-export default function CheckoutTransferClient({ orderId }: { orderId: string | null }) {
+export default function CheckoutTransferClient() {
   const { items, totalPrice, clear } = useCart();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [effectiveOrderId, setEffectiveOrderId] = useState<string | null>(orderId);
+  const [effectiveOrderId, setEffectiveOrderId] = useState<string | null>(null);
+  const [order, setOrder] = useState<StoredOrder | null>(null);
 
   useEffect(() => {
-    if (!orderId && typeof window !== 'undefined') {
-      const stored = localStorage.getItem('entityville.orderId');
-      if (stored) {
-        setEffectiveOrderId(stored);
-      }
-    } else if (orderId) {
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('orderId') || localStorage.getItem('entityville.orderId');
+
+    if (orderId) {
       setEffectiveOrderId(orderId);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('entityville.orderId', orderId);
+      localStorage.setItem('entityville.orderId', orderId);
+
+      const storedOrder = getStoredOrder(orderId);
+      if (storedOrder) {
+        setOrder(storedOrder);
       }
     }
-  }, [orderId]);
+  }, []);
 
   async function handleConfirmTransfer() {
     if (!effectiveOrderId) return;
@@ -33,28 +37,55 @@ export default function CheckoutTransferClient({ orderId }: { orderId: string | 
     setMessage(null);
 
     try {
-      const res = await fetch('/api/orders/confirm', {
+      if (!order) throw new Error('Order details were not found.');
+
+      await notifyTransfer(order);
+      fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: effectiveOrderId }),
+        body: JSON.stringify({
+          type: 'transfer_notified',
+          orderReference: order.order_reference,
+          email: order.customer.email,
+        }),
+      }).catch((error) => {
+        console.error('Transfer notification email request failed', error);
       });
-      const data = await res.json();
-
-      if (res.ok && data?.status) {
-        setMessage('Thank you — we have received your notice. We will verify your transfer and deliver your product to your door step.');
-        clear();
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('entityville.orderId');
-        }
-      } else {
-        setMessage('There was a problem confirming your transfer. Please contact support.');
-      }
+      setOrder({ ...order, status: 'transfer_notified' });
+      setMessage('Thank you — we have received your notice. We will verify your transfer and deliver your product to your door step.');
+      clear();
     } catch (err) {
       console.error(err);
       setMessage('There was a problem confirming your transfer. Please try again.');
     } finally {
       setLoading(false);
       setDialogOpen(false);
+    }
+  }
+
+  const displayItems = order?.items ?? items;
+  const displayTotal = order?.total ?? totalPrice;
+
+  async function handleResendConfirmation() {
+    if (!order) return;
+    setResending(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch('/api/resend-order-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderReference: order.order_reference,
+          email: order.customer.email,
+        }),
+      });
+      const data = await response.json();
+      setMessage(data.warning || data.error || 'Confirmation email sent.');
+    } catch {
+      setMessage('Order saved. We could not resend email immediately, but your reference is shown here.');
+    } finally {
+      setResending(false);
     }
   }
 
@@ -82,6 +113,9 @@ export default function CheckoutTransferClient({ orderId }: { orderId: string | 
             <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground mb-3">Final Step</p>
             <h1 className="text-4xl font-black tracking-tight">Complete your bank transfer</h1>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl">Your order is ready. Transfer the amount below and confirm once you have completed it. We'll verify your payment and deliver your product to your door step.</p>
+            <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
+              Save this order reference. You need it with your email address to track the order.
+            </p>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[1.4fr,0.8fr]">
@@ -90,11 +124,21 @@ export default function CheckoutTransferClient({ orderId }: { orderId: string | 
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Order reference</p>
-                    <p className="mt-2 text-xl font-semibold">{effectiveOrderId}</p>
+                    <p className="mt-2 text-xl font-semibold">{order?.order_reference || effectiveOrderId}</p>
+                    {order && (
+                      <button
+                        type="button"
+                        onClick={handleResendConfirmation}
+                        disabled={resending}
+                        className="mt-3 rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {resending ? 'Sending...' : 'Email me my order details'}
+                      </button>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">Amount</p>
-                    <p className="mt-2 text-2xl font-black">₦{totalPrice.toFixed(2)}</p>
+                    <p className="mt-2 text-2xl font-black">₦{displayTotal.toFixed(2)}</p>
                   </div>
                 </div>
               </div>
@@ -116,7 +160,7 @@ export default function CheckoutTransferClient({ orderId }: { orderId: string | 
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <p className="text-sm text-muted-foreground">Transfer amount</p>
-                    <p className="mt-1 font-semibold">₦{totalPrice.toFixed(2)}</p>
+                    <p className="mt-1 font-semibold">₦{displayTotal.toFixed(2)}</p>
                   </div>
                 </div>
               </div>
@@ -140,8 +184,8 @@ export default function CheckoutTransferClient({ orderId }: { orderId: string | 
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
                 <h2 className="text-xl font-semibold mb-4">Order summary</h2>
                 <div className="space-y-4">
-                  {items.length ? (
-                    items.map((item) => (
+                  {displayItems.length ? (
+                    displayItems.map((item) => (
                       <div key={item.id} className="flex items-start justify-between gap-3 rounded-2xl bg-white p-4 shadow-sm">
                         <div>
                           <p className="font-bold">{item.name}</p>
@@ -158,7 +202,7 @@ export default function CheckoutTransferClient({ orderId }: { orderId: string | 
                 </div>
                 <div className="mt-6 rounded-2xl bg-white p-4 text-sm font-semibold flex items-center justify-between">
                   <span>Total</span>
-                  <span>₦{totalPrice.toFixed(2)}</span>
+                  <span>₦{displayTotal.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -183,7 +227,7 @@ export default function CheckoutTransferClient({ orderId }: { orderId: string | 
             <div className="h-1 w-full rounded-t-[1.5rem] bg-gradient-to-r from-primary to-accent" />
             <h2 className="mt-6 text-3xl font-black">Confirm transfer</h2>
             <p className="mt-4 text-base leading-7 text-slate-600">
-              Have you completed the bank transfer for order <span className="font-semibold">{effectiveOrderId}</span>? Confirming here tells us to start verification and prepare delivery immediately.
+              Have you completed the bank transfer for order <span className="font-semibold">{order?.order_reference || effectiveOrderId}</span>? Confirming here tells us to start verification and prepare delivery immediately.
             </p>
 
             <div className="mt-8 rounded-[1.5rem] bg-slate-50 p-6">

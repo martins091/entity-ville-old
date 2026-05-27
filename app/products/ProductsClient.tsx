@@ -6,20 +6,23 @@ import Footer from '@/components/footer';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { products } from '@/lib/products';
 import { useCart } from '@/hooks/use-cart';
+import { fetchStorefrontProducts, staticProducts, type Product } from '@/lib/supabase/catalog';
 
-export default function ProductsClient({ category: initialCategory }: { category: string | null }) {
+export default function ProductsClient() {
   const { addItem } = useCart();
   const router = useRouter();
-  const [category, setCategory] = useState<string | null>(initialCategory);
+  const [category, setCategory] = useState<string | null>(null);
+  const [catalog, setCatalog] = useState<Product[]>(staticProducts);
 
   useEffect(() => {
-    setCategory(initialCategory);
-  }, [initialCategory]);
+    const params = new URLSearchParams(window.location.search);
+    setCategory(params.get('category'));
+    fetchStorefrontProducts().then(setCatalog);
+  }, []);
 
-  const categories = Array.from(new Set(products.map((p) => p.category)));
-  const filtered = category ? products.filter((p) => p.category === category) : products;
+  const categories = Array.from(new Set(catalog.map((p) => p.category)));
+  const filtered = category ? catalog.filter((p) => p.category === category) : catalog;
 
   function handleCategory(cat: string | null) {
     setCategory(cat);

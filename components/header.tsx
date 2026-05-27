@@ -91,6 +91,7 @@ export default function Header() {
           <Link href="/brand" className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 hover:bg-blue-50 rounded-lg">Brand</Link>
           <Link href="/news" className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 hover:bg-blue-50 rounded-lg">News</Link>
           <Link href="/careers" className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 hover:bg-blue-50 rounded-lg">Careers</Link>
+          <Link href="/track-order" className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 hover:bg-blue-50 rounded-lg">Track Order</Link>
           <Link href="/contact" className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 hover:bg-blue-50 rounded-lg">Contact</Link>
           
           {/* Get Quote Button */}
@@ -161,6 +162,7 @@ export default function Header() {
             <Link href="/case-studies" className="block text-foreground font-bold text-base hover:text-primary transition py-2 border-b border-blue-50" onClick={toggleMenu}>Case Studies</Link>
             <Link href="/news" className="block text-foreground font-bold text-base hover:text-primary transition py-2 border-b border-blue-50" onClick={toggleMenu}>News</Link>
             <Link href="/careers" className="block text-foreground font-bold text-base hover:text-primary transition py-2 border-b border-blue-50" onClick={toggleMenu}>Careers</Link>
+            <Link href="/track-order" className="block text-foreground font-bold text-base hover:text-primary transition py-2 border-b border-blue-50" onClick={toggleMenu}>Track Order</Link>
             <Link href="/contact" className="block text-foreground font-bold text-base hover:text-primary transition py-2 border-b border-blue-50" onClick={toggleMenu}>Contact</Link>
             
             {/* Get Quote Button - Mobile */}

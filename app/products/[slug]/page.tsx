@@ -16,7 +16,7 @@ export async function generateStaticParams() {
   ];
 }
 
-export default async function Page({ params }) {
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   // IMPORTANT: await the params Promise
   const { slug } = await params;
   

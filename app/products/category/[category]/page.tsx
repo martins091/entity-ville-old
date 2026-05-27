@@ -6,6 +6,8 @@ export async function generateStaticParams() {
   return categories.map((category) => ({ category }));
 }
 
-export default function Page({ params }) {
-  return <CategoryClient params={params} />;
+export default async function Page({ params }: { params: Promise<{ category: string }> }) {
+  const resolvedParams = await params;
+
+  return <CategoryClient params={resolvedParams} />;
 }

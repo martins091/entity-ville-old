@@ -1,10 +1,17 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { products } from "@/lib/products";
+import { fetchStorefrontProducts, staticProducts, type Product } from "@/lib/supabase/catalog";
 
 export default function ProductsSection() {
+  const [products, setProducts] = useState<Product[]>(staticProducts);
+
+  useEffect(() => {
+    fetchStorefrontProducts().then(setProducts);
+  }, []);
+
   return (
     <section
       id="products"

@@ -6,8 +6,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { productsMap } from '@/lib/products';
+import { fetchStorefrontProductBySlug } from '@/lib/supabase/catalog';
 import {
   Dialog,
   DialogClose,
@@ -19,7 +20,7 @@ import {
 } from '@/components/ui/dialog';
 
 export default function ProductDetailClient({ slug }) {
-  const product = productsMap[slug];
+  const [product, setProduct] = useState(productsMap[slug]);
   const { addItem } = useCart();
   const [qty, setQty] = useState(1);
   const [isCartModalOpen, setCartModalOpen] = useState(false);
@@ -28,6 +29,14 @@ export default function ProductDetailClient({ slug }) {
   const [activeImage, setActiveImage] = useState(
     product?.images?.[0] || product?.image
   );
+
+  useEffect(() => {
+    fetchStorefrontProductBySlug(slug).then((item) => {
+      if (!item) return;
+      setProduct(item);
+      setActiveImage(item.images?.[0] || item.image);
+    });
+  }, [slug]);
 
   if (!product) {
     return (

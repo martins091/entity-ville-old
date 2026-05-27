@@ -37,12 +37,12 @@ export default function CartPage() {
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <h3 className="font-bold">{it.name}</h3>
-                      <button onClick={() => removeItem(it.id || it.slug)} className="text-sm text-muted-foreground">Remove</button>
+                      <button onClick={() => removeItem(it.id)} className="text-sm text-muted-foreground">Remove</button>
                     </div>
 
                     <div className="mt-2 flex items-center gap-3">
                       <label className="text-sm text-muted-foreground">Qty</label>
-                      <input type="number" min={0} value={it.quantity} onChange={(e) => updateQty(it.id || it.slug, Number(e.target.value))} className="w-20 px-2 py-1 border rounded" />
+                      <input type="number" min={0} value={it.quantity} onChange={(e) => updateQty(it.id, Number(e.target.value))} className="w-20 px-2 py-1 border rounded" />
                     </div>
                   </div>
                 </div>

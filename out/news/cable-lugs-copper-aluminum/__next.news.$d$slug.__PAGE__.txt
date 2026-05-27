@@ -1,6 +1,6 @@
 1:"$Sreact.fragment"
-2:I[86059,["/_next/static/chunks/0bi47d-rje44~.js","/_next/static/chunks/0_879ixarc_93.js","/_next/static/chunks/0gjifyd245.ld.js","/_next/static/chunks/0oewz67nrl-kc.js"],"default"]
+2:I[86059,["/_next/static/chunks/0bi47d-rje44~.js","/_next/static/chunks/0_879ixarc_93.js","/_next/static/chunks/0his~~-k.p66o.js","/_next/static/chunks/0noyzmxc6-f~y.js"],"default"]
 3:I[97367,["/_next/static/chunks/0bi47d-rje44~.js","/_next/static/chunks/0_879ixarc_93.js"],"OutletBoundary"]
 4:"$Sreact.suspense"
-0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"slug":"cable-lugs-copper-aluminum"}],[["$","script","script-0",{"src":"/_next/static/chunks/0gjifyd245.ld.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/0oewz67nrl-kc.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"nunS1SHQeXWh_Ibu56Vrw"}
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"slug":"cable-lugs-copper-aluminum"}],[["$","script","script-0",{"src":"/_next/static/chunks/0his~~-k.p66o.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/0noyzmxc6-f~y.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"RGpKILb4wRfBDRXmFXY4I"}
 5:null
