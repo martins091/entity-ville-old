@@ -90,12 +90,12 @@ export default function ProductsSection() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-red-50 to-blue-50 mb-6">
               <Sparkles size={14} style={{ color: colors.primary }} />
               <span className="text-xs font-semibold tracking-wider uppercase" style={{ color: colors.secondary }}>
-                Premium Collection
+                electrical Collection
               </span>
             </div>
 
             <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Premium Electrical{" "}
+               Electrical{" "}
               <span className="relative inline-block">
                 <span className="bg-gradient-to-r from-[#C10008] to-[#027FFF] bg-clip-text text-transparent">
                   Components
