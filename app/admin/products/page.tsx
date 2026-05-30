@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Plus, Save, Search, Trash2 } from 'lucide-react';
+import { ImagePlus, Plus, Save, Search, Trash2 } from 'lucide-react';
 import AdminFrame from '../AdminFrame';
 import { requireAdminSession } from '@/lib/supabase/admin';
+import { uploadAdminImage } from '@/lib/supabase/storage';
 
 type ProductForm = {
   id?: string;
@@ -110,6 +111,7 @@ export default function AdminProductsPage() {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
@@ -198,6 +200,38 @@ export default function AdminProductsPage() {
     }));
   }
 
+  async function handleImageUpload(file: File | null, mode: 'main' | 'gallery') {
+    if (!file) return;
+    setUploading(true);
+    setMessage(null);
+
+    try {
+      const url = await uploadAdminImage({
+        file,
+        bucket: 'products',
+        folder: form.slug || slugify(form.name) || 'products',
+      });
+
+      if (mode === 'main') {
+        setForm((current) => ({
+          ...current,
+          image: url,
+          images: current.images ? `${current.images}\n${url}` : url,
+        }));
+      } else {
+        setForm((current) => ({
+          ...current,
+          images: current.images ? `${current.images}\n${url}` : url,
+        }));
+      }
+      setMessage('Image uploaded.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Image upload failed.');
+    } finally {
+      setUploading(false);
+    }
+  }
+
   useEffect(() => {
     loadProducts();
   }, []);
@@ -249,8 +283,16 @@ export default function AdminProductsPage() {
               {filtered.map((product) => (
                 <article key={product.id} className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center">
                   <div className="relative h-24 w-full shrink-0 overflow-hidden rounded-lg bg-slate-100 sm:w-28">
-                    {product.image && (
-                      <Image src={product.image} alt={product.name} fill className="object-cover" />
+                    {product.image ? (
+                      <img 
+                        src={product.image} 
+                        alt={product.name} 
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-slate-200 text-xs text-slate-500">
+                        No image
+                      </div>
                     )}
                   </div>
 
@@ -318,6 +360,31 @@ export default function AdminProductsPage() {
               <span className="mb-2 block text-sm font-semibold">Main image path</span>
               <input value={form.image} onChange={(event) => updateForm('image', event.target.value)} placeholder="/images/cable-tray.png" className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
             </label>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50">
+                <ImagePlus size={17} />
+                {uploading ? 'Uploading...' : 'Upload main image'}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(event) => handleImageUpload(event.target.files?.[0] || null, 'main')}
+                />
+              </label>
+              <label className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50">
+                <ImagePlus size={17} />
+                Upload gallery image
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={(event) => handleImageUpload(event.target.files?.[0] || null, 'gallery')}
+                />
+              </label>
+            </div>
 
             <label className="block">
               <span className="mb-2 block text-sm font-semibold">Description</span>

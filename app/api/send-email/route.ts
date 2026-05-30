@@ -49,11 +49,21 @@ export async function POST(request: Request) {
   if (error) return jsonError('Unable to load order for email.', 500);
   if (!data) return jsonError('Order not found.', 404);
 
+  const order = normalizeEmailOrder(data);
+  const shouldNotifyAdmin = type === 'order_confirmation' && !data.confirmation_sent;
+
   const result = await sendOrderEmail({
-    order: normalizeEmailOrder(data),
+    order,
     type,
     message,
   });
+
+  if (shouldNotifyAdmin) {
+    await sendOrderEmail({
+      order,
+      type: 'new_order_admin',
+    });
+  }
 
   if (!result.ok) {
     return Response.json({

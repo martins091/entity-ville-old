@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, Package, ReceiptText } from 'lucide-react';
+import { FileText, LogOut, Package, ReceiptText } from 'lucide-react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 const navItems = [
   { href: '/admin/orders', label: 'Orders', icon: ReceiptText },
   { href: '/admin/products', label: 'Products', icon: Package },
+  { href: '/admin/articles', label: 'Articles', icon: FileText },
 ];
 
 export default function AdminFrame({ children }: { children: React.ReactNode }) {
@@ -65,7 +66,7 @@ export default function AdminFrame({ children }: { children: React.ReactNode }) 
               <LogOut size={18} />
             </button>
           </div>
-          <nav className="mt-4 grid grid-cols-2 gap-2">
+          <nav className="mt-4 grid grid-cols-3 gap-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = pathname === item.href;

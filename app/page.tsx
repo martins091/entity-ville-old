@@ -6,13 +6,18 @@ import ClientsSection from '@/components/clients-section';
 import WhyChooseUs from '@/components/why-choose-us';
 import CTASection from '@/components/cta-section';
 import Footer from '@/components/footer';
+import { fetchStorefrontProductsForServer } from '@/lib/supabase/catalog';
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  const products = await fetchStorefrontProductsForServer();
+
   return (
     <main className="bg-background text-foreground">
       <Header />
       <HeroCarousel />
-      <ProductsSection />
+      <ProductsSection initialProducts={products} />
       <IndustriesSection />
       <ClientsSection />
       <WhyChooseUs />

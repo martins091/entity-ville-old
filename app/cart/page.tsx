@@ -31,11 +31,11 @@ const colors = {
 export default function CartPage() {
   const { items, updateQty, removeItem, totalItems, totalPrice } = useCart();
 
-  const incrementQty = (id: string, currentQty: number) => {
+  const incrementQty = (id: string | number, currentQty: number) => {
     updateQty(id, currentQty + 1);
   };
 
-  const decrementQty = (id: string, currentQty: number) => {
+  const decrementQty = (id: string | number, currentQty: number) => {
     if (currentQty > 1) {
       updateQty(id, currentQty - 1);
     }
@@ -230,10 +230,10 @@ export default function CartPage() {
                           {/* Price */}
                           <div className="text-right">
                             <div className="text-lg font-bold" style={{ color: colors.primary }}>
-                              ₦{(item.price * item.quantity).toLocaleString()}
+                              ₦{((item.price || 0) * item.quantity).toLocaleString()}
                             </div>
                             <div className="text-xs text-gray-400 line-through">
-                              ₦{(item.price * 1.2 * item.quantity).toLocaleString()}
+                              ₦{((item.price || 0) * 1.2 * item.quantity).toLocaleString()}
                             </div>
                           </div>
                         </div>
@@ -370,8 +370,7 @@ export default function CartPage() {
                   <input 
                     type="text" 
                     placeholder="Promo code"
-                    className="flex-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2"
-                    style={{ focusRingColor: colors.primary }}
+                    className="flex-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#C10008]"
                   />
                   <button 
                     className="px-4 py-2 text-sm font-semibold rounded-lg transition"

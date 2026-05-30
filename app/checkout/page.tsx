@@ -32,7 +32,7 @@ const colors = {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, totalPrice, clearCart } = useCart();
+  const { items, totalPrice } = useCart();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -213,8 +213,7 @@ export default function CheckoutPage() {
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 transition"
-                      style={{ focusRingColor: colors.primary }}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#C10008] transition"
                       placeholder="John Doe"
                       required 
                     />
@@ -232,8 +231,7 @@ export default function CheckoutPage() {
                       value={formData.email}
                       onChange={handleChange}
                       type="email"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 transition"
-                      style={{ focusRingColor: colors.primary }}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#C10008] transition"
                       placeholder="john@example.com"
                       required 
                     />
@@ -251,8 +249,7 @@ export default function CheckoutPage() {
                       value={formData.phone}
                       onChange={handleChange}
                       type="tel"
-                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 transition"
-                      style={{ focusRingColor: colors.primary }}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#C10008] transition"
                       placeholder="08012345678"
                       required 
                     />
@@ -281,8 +278,7 @@ export default function CheckoutPage() {
                     name="address"
                     value={formData.address}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 transition resize-none"
-                    style={{ focusRingColor: colors.primary }}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#C10008] transition resize-none"
                     placeholder="Street address, building number, etc."
                     rows={2}
                     required 
@@ -298,8 +294,7 @@ export default function CheckoutPage() {
                       name="city"
                       value={formData.city}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 transition"
-                      style={{ focusRingColor: colors.primary }}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#C10008] transition"
                       placeholder="Lagos"
                       required 
                     />
@@ -312,8 +307,7 @@ export default function CheckoutPage() {
                       name="state"
                       value={formData.state}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 transition"
-                      style={{ focusRingColor: colors.primary }}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#C10008] transition"
                       placeholder="Lagos"
                       required 
                     />
@@ -328,8 +322,7 @@ export default function CheckoutPage() {
                     name="zipCode"
                     value={formData.zipCode}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 transition"
-                    style={{ focusRingColor: colors.primary }}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#C10008] transition"
                     placeholder="100001"
                   />
                 </div>
@@ -342,8 +335,7 @@ export default function CheckoutPage() {
                     name="orderNotes"
                     value={formData.orderNotes}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 transition resize-none"
-                    style={{ focusRingColor: colors.primary }}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#C10008] transition resize-none"
                     placeholder="Special delivery instructions, additional information, etc."
                     rows={2}
                   />

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, FileText, Mail, MapPin, MessageSquare, Phone, RefreshCw, Search } from 'lucide-react';
+import { CheckCircle2, FileText, Mail, MapPin, MessageSquare, Phone, RefreshCw, Search, Trash2 } from 'lucide-react';
 import AdminFrame from '../AdminFrame';
 import { requireAdminSession } from '@/lib/supabase/admin';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -207,6 +207,71 @@ export default function AdminOrdersPage() {
     await loadOrders();
   }
 
+  async function deleteOrder(order: OrderRow) {
+    const confirmed = window.confirm(`Delete order ${order.order_reference}? This removes it from the admin list.`);
+    if (!confirmed) return;
+
+    const { supabase, isAdmin } = await requireAdminSession();
+    if (!supabase || !isAdmin) {
+      router.push('/admin/login');
+      return;
+    }
+
+    try {
+      // First, delete related notifications (due to foreign key constraints)
+      const { error: notifError } = await supabase
+        .from('order_notifications')
+        .delete()
+        .eq('order_id', order.id);
+      
+      if (notifError) {
+        console.error('Error deleting notifications:', notifError);
+        setMessage(`Failed to delete notifications: ${notifError.message}`);
+        return;
+      }
+
+      // Delete related email logs
+      const { error: emailError } = await supabase
+        .from('email_logs')
+        .delete()
+        .eq('order_id', order.id);
+      
+      if (emailError) {
+        console.error('Error deleting email logs:', emailError);
+        setMessage(`Failed to delete email logs: ${emailError.message}`);
+        return;
+      }
+
+      // Finally, delete the order
+      const { error, data } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', order.id)
+        .select();
+
+      if (error) {
+        console.error('Delete error:', error);
+        setMessage(`Delete failed: ${error.message}`);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        setMessage(`Order ${order.order_reference} may have already been deleted.`);
+      } else {
+        setMessage(`Successfully deleted ${order.order_reference}.`);
+      }
+
+      // Remove from local state
+      setOrders((current) => current.filter((entry) => entry.id !== order.id));
+      setNotifications((current) => current.filter((entry) => entry.order_id !== order.id));
+      setEmailLogs((current) => current.filter((entry) => entry.order_id !== order.id));
+      
+    } catch (err) {
+      console.error('Unexpected error during deletion:', err);
+      setMessage('An unexpected error occurred while deleting the order.');
+    }
+  }
+
   useEffect(() => {
     loadOrders();
   }, []);
@@ -329,6 +394,14 @@ export default function AdminOrdersPage() {
                   <div className="text-left lg:text-right">
                     <p className="text-2xl font-black">{money(order.total)}</p>
                     <p className="mt-1 text-xs text-slate-500">{new Date(order.created_at).toLocaleString()}</p>
+                    <button
+                      type="button"
+                      onClick={() => deleteOrder(order)}
+                      className="mt-3 inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-red-200 px-3 text-xs font-bold text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 size={15} />
+                      Delete
+                    </button>
                   </div>
                 </div>
 

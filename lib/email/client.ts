@@ -17,6 +17,7 @@ export function getResendClient() {
 export const emailConfig = {
   from: process.env.EMAIL_FROM || 'Entity Ville <onboarding@resend.dev>',
   replyTo: process.env.EMAIL_REPLY_TO || 'sales@entityville.com',
+  adminOrderEmail: process.env.ADMIN_ORDER_EMAIL || process.env.EMAIL_REPLY_TO || 'sales@entityville.com',
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
   bank: {
     name: process.env.BANK_NAME || 'First Bank of Nigeria',

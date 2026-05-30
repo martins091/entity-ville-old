@@ -1,5 +1,6 @@
 import * as React from 'react';
 import OrderConfirmation from './templates/OrderConfirmation';
+import AdminNewOrder from './templates/AdminNewOrder';
 import PaymentVerified from './templates/PaymentVerified';
 import StatusUpdate from './templates/StatusUpdate';
 import TransferNotified from './templates/TransferNotified';
@@ -15,6 +16,7 @@ type SendOrderEmailInput = {
 
 const subjects: Record<EmailType, string> = {
   order_confirmation: 'Your Entity Ville order confirmation',
+  new_order_admin: 'New Entity Ville order received',
   transfer_notified: 'We received your transfer notice',
   payment_verified: 'Your payment has been verified',
   status_update: 'Order status update from Entity Ville',
@@ -30,6 +32,7 @@ const sentColumns: Partial<Record<EmailType, string>> = {
 
 function templateFor({ order, type, message }: SendOrderEmailInput) {
   if (type === 'order_confirmation') return <OrderConfirmation order={order} />;
+  if (type === 'new_order_admin') return <AdminNewOrder order={order} />;
   if (type === 'transfer_notified') return <TransferNotified order={order} />;
   if (type === 'payment_verified') return <PaymentVerified order={order} />;
   return <StatusUpdate order={order} message={message || 'Your order status has been updated.'} />;
@@ -41,19 +44,21 @@ export async function logEmail({
   status,
   providerMessageId,
   errorMessage,
+  recipientEmail,
 }: {
   order: EmailOrder;
   type: EmailType;
   status: 'sent' | 'failed';
   providerMessageId?: string;
   errorMessage?: string;
+  recipientEmail?: string;
 }) {
   const supabase = getSupabaseServerClient();
 
   await supabase.from('email_logs').insert({
     order_id: order.id,
     order_reference: order.order_reference,
-    recipient_email: order.customer_email,
+    recipient_email: recipientEmail || order.customer_email,
     type,
     status,
     provider_message_id: providerMessageId || null,
@@ -68,11 +73,15 @@ export async function logEmail({
 }
 
 export async function sendOrderEmail(input: SendOrderEmailInput) {
+  const recipientEmail = input.type === 'new_order_admin'
+    ? emailConfig.adminOrderEmail
+    : input.order.customer_email;
+
   try {
     const resend = getResendClient();
     const result = await resend.emails.send({
       from: emailConfig.from,
-      to: input.order.customer_email,
+      to: recipientEmail,
       replyTo: emailConfig.replyTo,
       subject: subjects[input.type],
       react: templateFor(input) as React.ReactElement,
@@ -84,6 +93,7 @@ export async function sendOrderEmail(input: SendOrderEmailInput) {
         type: input.type,
         status: 'failed',
         errorMessage: result.error.message,
+        recipientEmail,
       });
       return { ok: false, error: result.error.message };
     }
@@ -93,6 +103,7 @@ export async function sendOrderEmail(input: SendOrderEmailInput) {
       type: input.type,
       status: 'sent',
       providerMessageId: result.data?.id,
+      recipientEmail,
     });
 
     return { ok: true, id: result.data?.id };
@@ -105,6 +116,7 @@ export async function sendOrderEmail(input: SendOrderEmailInput) {
         type: input.type,
         status: 'failed',
         errorMessage: message,
+        recipientEmail,
       });
     } catch (logError) {
       console.error('Unable to log email failure', logError);

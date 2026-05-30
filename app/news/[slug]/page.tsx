@@ -1,5 +1,7 @@
 import NewsDetailClient from './NewsDetailClient';
 
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
   // List ALL your news article slugs here
   return [

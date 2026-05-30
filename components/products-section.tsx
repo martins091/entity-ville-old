@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { ArrowRight, Sparkles, Zap, Shield, Truck, Star, Eye, Award, Clock, CheckCircle } from "lucide-react";
 import { fetchStorefrontProducts, staticProducts, type Product } from "@/lib/supabase/catalog";
 
@@ -14,12 +14,14 @@ const colors = {
   gradientReverse: "linear-gradient(135deg, #027FFF 0%, #C10008 100%)",
 };
 
-export default function ProductsSection() {
-  const [products, setProducts] = useState<Product[]>(staticProducts);
+export default function ProductsSection({ initialProducts = staticProducts }: { initialProducts?: Product[] }) {
+  const [products, setProducts] = useState<Product[]>(initialProducts.length ? initialProducts : staticProducts);
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchStorefrontProducts().then(setProducts);
+    fetchStorefrontProducts().then((loadedProducts) => {
+      setProducts(loadedProducts.length ? loadedProducts : staticProducts);
+    });
   }, []);
 
   const containerVariants = {
@@ -32,7 +34,7 @@ export default function ProductsSection() {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { y: 30, opacity: 0 },
     visible: {
       y: 0,
@@ -60,8 +62,7 @@ export default function ProductsSection() {
         />
         <div 
           className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-10 blur-3xl animate-pulse"
-          style={{ backgroundColor: colors.secondary }}
-          style={{ animationDelay: '1s' }}
+          style={{ backgroundColor: colors.secondary, animationDelay: '1s' }}
         />
         <div className="absolute top-20 left-1/4 w-60 h-60 rounded-full opacity-5 blur-3xl"
           style={{ background: colors.gradient }}
@@ -149,7 +150,7 @@ export default function ProductsSection() {
             <motion.div
               key={product.id}
               variants={itemVariants}
-              onMouseEnter={() => setHoveredProduct(product.id)}
+              onMouseEnter={() => setHoveredProduct(String(product.id))}
               onMouseLeave={() => setHoveredProduct(null)}
               className="group relative"
             >
@@ -158,7 +159,7 @@ export default function ProductsSection() {
                 className="absolute -inset-0.5 rounded-2xl blur-xl opacity-0 group-hover:opacity-30 transition duration-500"
                 style={{ 
                   background: colors.gradient,
-                  opacity: hoveredProduct === product.id ? 0.3 : 0
+                  opacity: hoveredProduct === String(product.id) ? 0.3 : 0
                 }}
               />
 
@@ -229,7 +230,7 @@ export default function ProductsSection() {
                       backgroundImage: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
                       backgroundClip: 'text',
                       WebkitBackgroundClip: 'text',
-                      color: hoveredProduct === product.id ? 'transparent' : '#111827'
+                      color: hoveredProduct === String(product.id) ? 'transparent' : '#111827'
                     }}>
                     {product.name}
                   </h3>
@@ -282,7 +283,7 @@ export default function ProductsSection() {
                   <div 
                     className="h-full transition-all duration-500"
                     style={{ 
-                      width: hoveredProduct === product.id ? '100%' : '60%',
+                      width: hoveredProduct === String(product.id) ? '100%' : '60%',
                       background: colors.gradient
                     }}
                   />

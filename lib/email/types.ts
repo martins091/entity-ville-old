@@ -1,5 +1,6 @@
 export type EmailType =
   | 'order_confirmation'
+  | 'new_order_admin'
   | 'transfer_notified'
   | 'payment_verified'
   | 'status_update'
