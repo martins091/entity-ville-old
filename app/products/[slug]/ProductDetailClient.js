@@ -54,6 +54,7 @@ export default function ProductDetailClient({ slug }) {
   const [isCartModalOpen, setCartModalOpen] = useState(false);
   const [activeImage, setActiveImage] = useState(product?.images?.[0] || product?.image);
   const [isWishlist, setIsWishlist] = useState(false);
+  const hasPrice = Number(product?.price || 0) > 0;
 
   useEffect(() => {
     fetchStorefrontProductBySlug(slug).then((item) => {
@@ -97,6 +98,8 @@ export default function ProductDetailClient({ slug }) {
   }
 
   const handleAdd = () => {
+    if (!hasPrice) return;
+
     addItem(
       {
         id: product.slug,
@@ -241,14 +244,18 @@ export default function ProductDetailClient({ slug }) {
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Price</span>
                 <div className="flex items-baseline gap-3">
                   <span className="text-4xl font-black" style={{ color: colors.primary }}>
-                    ₦{product.price.toLocaleString()}
+                    {hasPrice ? `₦${product.price.toLocaleString()}` : 'Request Quote'}
                   </span>
-                  <span className="text-sm text-gray-400 line-through">
-                    ₦{(product.price * 1.2).toLocaleString()}
-                  </span>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
-                    Save 20%
-                  </span>
+                  {hasPrice && (
+                    <>
+                      <span className="text-sm text-gray-400 line-through">
+                        ₦{(product.price * 1.2).toLocaleString()}
+                      </span>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                        Save 20%
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -293,8 +300,7 @@ export default function ProductDetailClient({ slug }) {
                       min={1}
                       value={qty}
                       onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
-                      className="w-16 text-center px-2 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2"
-                      style={{ focusRingColor: colors.primary }}
+                      className="w-16 text-center px-2 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#C10008]"
                     />
                     <button 
                       onClick={incrementQty}
@@ -306,14 +312,16 @@ export default function ProductDetailClient({ slug }) {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    onClick={handleAdd}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-bold transition-all duration-300 hover:scale-105 shadow-lg"
-                    style={{ background: colors.gradient }}
-                  >
-                    <ShoppingCart size={18} />
-                    Add to Cart - ₦{(product.price * qty).toLocaleString()}
-                  </button>
+                  {hasPrice && (
+                    <button
+                      onClick={handleAdd}
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-bold transition-all duration-300 hover:scale-105 shadow-lg"
+                      style={{ background: colors.gradient }}
+                    >
+                      <ShoppingCart size={18} />
+                      Add to Cart - ₦{(product.price * qty).toLocaleString()}
+                    </button>
+                  )}
                   <Link
                     href="/contact"
                     className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-105 border-2"

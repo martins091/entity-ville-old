@@ -1,131 +1,171 @@
 import { createClient } from '@supabase/supabase-js';
-import { getSupabaseBrowserClient } from './client';
-import { products as fallbackProducts } from '@/lib/products';
 
-export type Product = {
-  id: string | number;
+const FALLBACK_PRODUCT_IMAGE = '/images/earthing-systems.jpg';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+export interface ProductVariant {
+  id: string;
+  part_number: string;
+  size: string;
+  weight: string;
+  price: number;
+  stock_quantity: number;
+}
+
+export interface ProductFamily {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  material: string;
+  standard: string;
+  image_url: string;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+    main_category: string;
+  };
+  variants: ProductVariant[];
+}
+
+export interface StorefrontProduct {
+  id: string;
   slug: string;
   name: string;
   description: string;
   category: string;
   price: number;
   image: string;
-  images?: string[];
-  features?: string[];
-  specs?: string[];
-  applications?: string[];
-  active?: boolean;
-  isNew?: boolean;
-  isFeatured?: boolean;
-  created_at?: string; // Add this field
-};
-
-type ProductRow = {
-  id: string;
-  slug: string;
-  name: string;
-  description: string;
-  category: string;
-  price: number | string;
-  image: string | null;
-  images: string[] | null;
-  features: string[] | null;
-  specs: string[] | null;
-  applications: string[] | null;
+  images: string[];
+  features: string[];
+  specs: string[];
+  applications: string[];
   active: boolean;
-  created_at?: string; // Add this field
-};
+}
 
-export const staticProducts = fallbackProducts as Product[];
+function getStartingPrice(variants: ProductVariant[] = []) {
+  const prices = variants.map((variant) => Number(variant.price || 0)).filter((price) => price > 0);
+  return prices.length ? Math.min(...prices) : 0;
+}
 
-export function normalizeProduct(row: ProductRow): Product {
+function familyToStorefrontProduct(family: ProductFamily): StorefrontProduct {
+  const image = family.image_url || FALLBACK_PRODUCT_IMAGE;
+  const variants = family.variants || [];
+
   return {
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    description: row.description,
-    category: row.category,
-    price: Number(row.price || 0),
-    image: row.image || '/images/product-power.jpg',
-    images: row.images?.length ? row.images : row.image ? [row.image] : [],
-    features: row.features || [],
-    specs: row.specs || [],
-    applications: row.applications || [],
-    active: row.active,
-    created_at: row.created_at,
+    id: family.id,
+    slug: family.slug,
+    name: family.name,
+    description: family.description,
+    category: family.category?.name || family.material || 'Catalogue Product',
+    price: getStartingPrice(variants),
+    image,
+    images: [image],
+    features: [
+      family.material ? `${family.material} material` : 'Catalogue product family',
+      family.standard || 'IEC EN 62305',
+      `${variants.length} available variant${variants.length === 1 ? '' : 's'}`,
+    ],
+    specs: [
+      family.standard ? `Standard: ${family.standard}` : '',
+      family.material ? `Material: ${family.material}` : '',
+      ...variants.slice(0, 8).map((variant) => {
+        const details = [variant.size, variant.weight].filter(Boolean).join(' / ');
+        return `${variant.part_number}${details ? ` - ${details}` : ''}`;
+      }),
+    ].filter(Boolean),
+    applications: [
+      family.category?.main_category || 'Electrical infrastructure',
+      family.category?.name || 'Grounding and lightning protection systems',
+    ],
+    active: true,
   };
 }
 
-export async function fetchStorefrontProducts() {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) return staticProducts;
-
+// Fetch all product families with their variants
+export async function fetchProductFamilies(): Promise<ProductFamily[]> {
   const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('active', true)
-    .order('created_at', { ascending: false }); // ← CHANGED: Order by created_at descending (newest first)
-
-  if (error || !data?.length) {
-    if (error) console.warn('Unable to load Supabase products. Showing fallback products.', error.message);
-    return staticProducts;
+    .from('product_families')
+    .select(`
+      *,
+      variants:product_variants(*),
+      category:categories(*)
+    `);
+  
+  if (error) {
+    console.error('Error fetching product families:', error);
+    return [];
   }
-
-  return data.map(normalizeProduct);
+  
+  return data || [];
 }
 
-export async function fetchStorefrontProductsForServer() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !key) return staticProducts;
-
-  try {
-    const supabase = createClient(url, key, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
-
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('active', true)
-      .order('created_at', { ascending: false }); // ← CHANGED: Order by created_at descending (newest first)
-
-    if (error || !data?.length) {
-      if (error) console.warn('Unable to load server products. Showing fallback products.', error.message);
-      return staticProducts;
-    }
-
-    return data.map(normalizeProduct);
-  } catch (error) {
-    console.warn(
-      'Unable to load server products. Showing fallback products.',
-      error instanceof Error ? error.message : error
-    );
-    return staticProducts;
-  }
-}
-
-export async function fetchStorefrontProductBySlug(slug: string) {
-  const supabase = getSupabaseBrowserClient();
-  const fallback = staticProducts.find((product) => product.slug === slug) || null;
-
-  if (!supabase) return fallback;
-
+// Fetch single product family by slug
+export async function fetchProductFamilyBySlug(slug: string): Promise<ProductFamily | null> {
   const { data, error } = await supabase
-    .from('products')
-    .select('*')
+    .from('product_families')
+    .select(`
+      *,
+      variants:product_variants(*),
+      category:categories(*)
+    `)
     .eq('slug', slug)
-    .eq('active', true)
-    .maybeSingle();
-
-  if (error || !data) {
-    if (error) console.error('Unable to load Supabase product', error);
-    return fallback;
+    .single();
+  
+  if (error) {
+    console.error('Error fetching product family by slug:', error);
+    return null;
   }
+  return data;
+}
 
-  return normalizeProduct(data);
+// Fetch families by category slug - FIXED VERSION
+export async function fetchProductFamiliesByCategory(categorySlug: string): Promise<ProductFamily[]> {
+  // First, get the category ID from the slug
+  const { data: category, error: categoryError } = await supabase
+    .from('categories')
+    .select('id, name, slug, main_category')
+    .eq('slug', categorySlug)
+    .single();
+  
+  if (categoryError) {
+    console.error('Category not found:', categorySlug, categoryError);
+    return [];
+  }
+  
+  if (!category) {
+    console.error('No category found for slug:', categorySlug);
+    return [];
+  }
+  
+  console.log('Found category:', category);
+  
+  // Then fetch families that belong to this category ID
+  const { data: families, error: familiesError } = await supabase
+    .from('product_families')
+    .select(`
+      *,
+      variants:product_variants(*),
+      category:categories(*)
+    `)
+    .eq('category_id', category.id);
+  
+  if (familiesError) {
+    console.error('Error fetching families:', familiesError);
+    return [];
+  }
+  
+  console.log(`Found ${families?.length || 0} families for category: ${category.name}`);
+  
+  return families || [];
+}
+
+export async function fetchStorefrontProductBySlug(slug: string): Promise<StorefrontProduct | null> {
+  const family = await fetchProductFamilyBySlug(slug);
+  return family ? familyToStorefrontProduct(family) : null;
 }
