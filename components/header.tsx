@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X, ChevronDown, ShoppingCart, Briefcase, Newspaper, FileText } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
 import Image from 'next/image';
-import { products as productList } from '@/lib/products';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'; // ← CHANGE THIS
+
+const supabase = getSupabaseBrowserClient();
 
 const industries = [
   { name: 'Oil & Gas', href: '/industries/oil-gas' },
@@ -31,9 +33,19 @@ const resourceItems = [
   { name: 'Contact', href: '/contact' },
 ];
 
+// Category type
+type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  main_category: string;
+};
+
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { totalItems } = useCart();
 
   const toggleMenu = () => setIsOpen(!isOpen);
@@ -41,7 +53,37 @@ export default function Header() {
     setOpenDropdown(openDropdown === name ? null : name);
   };
 
-  const categories = Array.from(new Set(productList.map((p) => p.category)));
+  // Fetch categories from Supabase
+  useEffect(() => {
+    async function fetchCategories() {
+      // Check if supabase client is available
+      if (!supabase) {
+        console.error('Supabase client not configured');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('id, name, slug, main_category')
+          .order('display_order', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching categories:', error);
+          return;
+        }
+
+        setCategories(data || []);
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchCategories();
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b-2 border-primary shadow-lg">
@@ -68,7 +110,7 @@ export default function Header() {
             Home
           </Link>
 
-          {/* Products Dropdown */}
+          {/* Products Dropdown - Now using database categories */}
           <div className="relative">
             <button
               onClick={() => toggleDropdown('products')}
@@ -79,7 +121,7 @@ export default function Header() {
             </button>
             
             {openDropdown === 'products' && (
-              <div className="absolute left-0 mt-2 w-72 bg-white border border-gray-200 rounded-xl shadow-xl z-50 py-2">
+              <div className="absolute left-0 mt-2 w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-50 py-2">
                 <Link 
                   href="/products" 
                   className="block px-4 py-2.5 text-foreground hover:bg-primary/5 hover:text-primary font-medium text-sm border-b border-gray-100"
@@ -88,16 +130,25 @@ export default function Header() {
                   All Products
                 </Link>
                 <div className="max-h-96 overflow-y-auto">
-                  {categories.map((cat) => (
-                    <Link
-                      key={cat}
-                      href={`/products?category=${encodeURIComponent(cat)}`}
-                      className="block px-4 py-2 text-foreground hover:bg-primary/5 hover:text-primary text-sm"
-                      onClick={() => setOpenDropdown(null)}
-                    >
-                      {cat}
-                    </Link>
-                  ))}
+                  {isLoading ? (
+                    <div className="px-4 py-3 text-sm text-gray-500">Loading categories...</div>
+                  ) : categories.length === 0 ? (
+                    <div className="px-4 py-3 text-sm text-gray-500">No categories found</div>
+                  ) : (
+                    categories.map((cat) => (
+                      <Link
+                        key={cat.id}
+                        href={`/products/category/${cat.slug}`}
+                        className="block px-4 py-2 text-foreground hover:bg-primary/5 hover:text-primary text-sm"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        <div className="flex flex-col">
+                          <span>{cat.name}</span>
+                          <span className="text-xs text-gray-400">{cat.main_category}</span>
+                        </div>
+                      </Link>
+                    ))
+                  )}
                 </div>
               </div>
             )}
@@ -129,7 +180,7 @@ export default function Header() {
             )}
           </div>
 
-          {/* Company Dropdown - Consolidates About, Brand, Careers, News */}
+          {/* Company Dropdown */}
           <div className="relative">
             <button
               onClick={() => toggleDropdown('company')}
@@ -150,7 +201,6 @@ export default function Header() {
                   >
                     {item.name === 'Careers' && <Briefcase size={14} />}
                     {item.name === 'News' && <Newspaper size={14} />}
-                    {item.name === 'Case Studies' && <FileText size={14} />}
                     {item.name}
                   </Link>
                 ))}
@@ -158,7 +208,7 @@ export default function Header() {
             )}
           </div>
 
-          {/* Resources Dropdown - Consolidates Case Studies, Track Order, Contact */}
+          {/* Resources Dropdown */}
           <div className="relative">
             <button
               onClick={() => toggleDropdown('resources')}
@@ -213,26 +263,31 @@ export default function Header() {
         </button>
       </nav>
 
-      {/* Mobile Menu - Simplified accordion style */}
+      {/* Mobile Menu */}
       {isOpen && (
         <div className="lg:hidden border-t border-gray-100 bg-white max-h-[calc(100vh-64px)] overflow-y-auto">
           <div className="px-4 py-3 space-y-1">
             <MobileNavLink href="/" onClick={toggleMenu}>Home</MobileNavLink>
             
-            {/* Products Mobile */}
+            {/* Products Mobile - Now using database categories */}
             <MobileDropdown
               title="Products"
               isOpen={openDropdown === 'mobile-products'}
               onToggle={() => toggleDropdown('mobile-products')}
             >
               <MobileSubLink href="/products" onClick={toggleMenu}>All Products</MobileSubLink>
-              {categories.map((cat) => (
+              {isLoading ? (
+                <div className="text-sm text-gray-500 py-2">Loading categories...</div>
+              ) : categories.map((cat) => (
                 <MobileSubLink 
-                  key={cat} 
-                  href={`/products?category=${encodeURIComponent(cat)}`} 
+                  key={cat.id} 
+                  href={`/products/category/${cat.slug}`} 
                   onClick={toggleMenu}
                 >
-                  {cat}
+                  <div className="flex flex-col">
+                    <span>{cat.name}</span>
+                    <span className="text-xs text-gray-400">{cat.main_category}</span>
+                  </div>
                 </MobileSubLink>
               ))}
             </MobileDropdown>
@@ -302,7 +357,7 @@ export default function Header() {
   );
 }
 
-// Mobile helper components for cleaner code
+// Mobile helper components
 function MobileNavLink({ href, onClick, children }: { href: string; onClick: () => void; children: React.ReactNode }) {
   return (
     <Link 
