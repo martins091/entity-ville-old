@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Menu, X, ChevronDown, ShoppingCart, Briefcase, Newspaper, FileText, Zap, Shield, Package, Activity, Plane, ArrowRight } from 'lucide-react';
+import { Menu, X, ChevronDown, ShoppingCart, Briefcase, Newspaper, FileText, Zap, Shield, Package, Activity, Plane, ArrowRight, Search } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
 import Image from 'next/image';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const supabase = getSupabaseBrowserClient();
 
@@ -52,6 +53,7 @@ export default function Header() {
   const [isLoading, setIsLoading] = useState(true);
   const { totalItems } = useCart();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     async function fetchCategories() {
@@ -90,8 +92,27 @@ export default function Header() {
   }, {} as Record<string, Category[]>);
 
   const toggleMenu = () => setIsOpen(!isOpen);
+  
   const toggleDropdown = (name: string) => {
-    setOpenDropdown(openDropdown === name ? null : name);
+    if (openDropdown === name) {
+      setOpenDropdown(null);
+    } else {
+      setOpenDropdown(name);
+    }
+  };
+
+  const handleMouseEnter = (name: string) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setOpenDropdown(name);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setOpenDropdown(null);
+    }, 150);
   };
 
   // Close dropdown when clicking outside
@@ -136,13 +157,17 @@ export default function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-2" ref={dropdownRef}>
+        <div className="hidden lg:flex items-center gap-1" ref={dropdownRef}>
           <Link href="/" className="text-gray-700 font-medium hover:text-red-600 transition px-3 py-2 text-sm">
             Home
           </Link>
 
-          {/* Products Mega Menu - Shifted Left */}
-          <div className="relative">
+          {/* Products Mega Menu - Wider & More Space */}
+          <div 
+            className="relative"
+            onMouseEnter={() => handleMouseEnter('products')}
+            onMouseLeave={handleMouseLeave}
+          >
             <button
               onClick={() => toggleDropdown('products')}
               className={`flex items-center gap-1 text-gray-700 font-medium hover:text-red-600 transition px-3 py-2 text-sm ${openDropdown === 'products' ? 'text-red-600' : ''}`}
@@ -151,58 +176,79 @@ export default function Header() {
               <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === 'products' ? 'rotate-180' : ''}`} />
             </button>
             
-            {openDropdown === 'products' && (
-              <div className="absolute right-0 mt-2 w-[800px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
-                <div className="grid grid-cols-4 gap-0">
-                  {/* Left Column - Featured Categories */}
-                  <div className="col-span-3 p-6">
-                    <div className="grid grid-cols-3 gap-6">
-                      {Object.entries(groupedCategories).map(([groupName, cats]) => (
-                        <div key={groupName}>
-                          <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider border-l-2 border-red-500 pl-3">
-                            {groupName}
-                          </h3>
-                          <ul className="space-y-2">
-                            {cats.slice(0, 6).map((cat) => (
-                              <li key={cat.id}>
-                                <Link
-                                  href={`/products/category/${cat.slug}`}
-                                  className="text-gray-600 hover:text-red-600 text-sm block py-1 hover:translate-x-1 transition-all"
-                                  onClick={() => setOpenDropdown(null)}
-                                >
-                                  {cat.name}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
+            <AnimatePresence>
+              {openDropdown === 'products' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute left-1/2 -translate-x-1/2 mt-2 w-[1100px] max-w-[95vw] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-y-auto max-h-[80vh]"
+                >
+                  <div className="grid grid-cols-6 gap-0">
+                    {/* Left Column - Category Groups - Now wider with 5 columns */}
+                    <div className="col-span-5 p-6">
+                      <div className="grid grid-cols-5 gap-6">
+                        {isLoading ? (
+                          <div className="col-span-5 text-center py-8 text-gray-500">Loading categories...</div>
+                        ) : (
+                          Object.entries(groupedCategories).map(([groupName, cats]) => (
+                            <div key={groupName}>
+                              <h3 className="font-bold text-gray-900 mb-3 text-xs uppercase tracking-wider border-l-2 border-red-500 pl-3">
+                                {groupName}
+                              </h3>
+                              <ul className="space-y-1.5">
+                                {cats.map((cat) => (
+                                  <li key={cat.id}>
+                                    <Link
+                                      href={`/products/category/${cat.slug}`}
+                                      className="text-gray-600 hover:text-red-600 text-sm block py-1 hover:translate-x-1 transition-all"
+                                      onClick={() => setOpenDropdown(null)}
+                                    >
+                                      {cat.name}
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        <Link href="/products" className="text-red-600 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
+                          View All Products <ArrowRight size={14} />
+                        </Link>
+                      </div>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                      <Link href="/products" className="text-red-600 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
-                        View All Products <ArrowRight size={14} />
-                      </Link>
+                    
+                    {/* Right Column - Promo / Featured - Smaller */}
+                    <div className="col-span-1 bg-gradient-to-br from-red-50 to-blue-50 p-4 flex flex-col justify-between">
+                      <div className="text-center">
+                        <Zap size={28} className="mx-auto mb-2 text-red-500" />
+                        <h4 className="font-bold text-gray-900 mb-1 text-sm">Need Help?</h4>
+                        <p className="text-xs text-gray-600 mb-3">Our experts are here to help</p>
+                        <Link href="/contact" className="inline-block px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition">
+                          Contact Sales
+                        </Link>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-gray-200/50">
+                        <Link href="/products" className="text-xs text-gray-500 hover:text-red-600 transition flex items-center justify-center gap-1">
+                          <Search size={12} /> Search all
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                  
-                  {/* Right Column - Promo / Featured */}
-                  <div className="bg-gradient-to-br from-red-50 to-blue-50 p-6">
-                    <div className="text-center">
-                      <Zap size={32} className="mx-auto mb-3 text-red-500" />
-                      <h4 className="font-bold text-gray-900 mb-2">Need Help?</h4>
-                      <p className="text-xs text-gray-600 mb-4">Our experts are here to help you choose the right products</p>
-                      <Link href="/contact" className="inline-block px-4 py-2 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition">
-                        Contact Sales
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Industries Mega Menu */}
-          <div className="relative">
+          <div 
+            className="relative"
+            onMouseEnter={() => handleMouseEnter('industries')}
+            onMouseLeave={handleMouseLeave}
+          >
             <button
               onClick={() => toggleDropdown('industries')}
               className={`flex items-center gap-1 text-gray-700 font-medium hover:text-red-600 transition px-3 py-2 text-sm ${openDropdown === 'industries' ? 'text-red-600' : ''}`}
@@ -211,45 +257,57 @@ export default function Header() {
               <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === 'industries' ? 'rotate-180' : ''}`} />
             </button>
             
-            {openDropdown === 'industries' && (
-              <div className="absolute left-0 mt-2 w-[600px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50">
-                <div className="grid grid-cols-2 gap-0">
-                  <div className="p-6">
-                    <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider border-l-2 border-red-500 pl-3">
-                      Industries We Serve
-                    </h3>
-                    <div className="grid grid-cols-1 gap-2">
-                      {industries.map((industry) => (
-                        <Link
-                          key={industry.name}
-                          href={industry.href}
-                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition group"
-                          onClick={() => setOpenDropdown(null)}
-                        >
-                          <span className="text-2xl">{industry.icon}</span>
-                          <div>
-                            <div className="font-medium text-gray-800 group-hover:text-red-600">{industry.name}</div>
-                            <div className="text-xs text-gray-400">Solutions for {industry.name.toLowerCase()}</div>
-                          </div>
-                        </Link>
-                      ))}
+            <AnimatePresence>
+              {openDropdown === 'industries' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute left-1/2 -translate-x-1/2 mt-2 w-[700px] max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50"
+                >
+                  <div className="grid grid-cols-5 gap-0">
+                    <div className="col-span-4 p-6">
+                      <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider border-l-2 border-red-500 pl-3">
+                        Industries We Serve
+                      </h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        {industries.map((industry) => (
+                          <Link
+                            key={industry.name}
+                            href={industry.href}
+                            className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition group"
+                            onClick={() => setOpenDropdown(null)}
+                          >
+                            <span className="text-2xl">{industry.icon}</span>
+                            <div>
+                              <div className="font-medium text-gray-800 group-hover:text-red-600">{industry.name}</div>
+                              <div className="text-xs text-gray-400">Solutions for {industry.name.toLowerCase()}</div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+                      <Shield size={32} className="mb-3 text-blue-500" />
+                      <h4 className="font-bold text-gray-900 mb-2">Custom Solutions</h4>
+                      <p className="text-xs text-gray-600 mb-4">Need a solution for your specific industry?</p>
+                      <Link href="/contact" className="text-red-600 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
+                        Talk to an Expert <ArrowRight size={14} />
+                      </Link>
                     </div>
                   </div>
-                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-                    <Shield size={32} className="mb-3 text-blue-500" />
-                    <h4 className="font-bold text-gray-900 mb-2">Custom Solutions</h4>
-                    <p className="text-xs text-gray-600 mb-4">Need a solution for your specific industry?</p>
-                    <Link href="/contact" className="text-red-600 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
-                      Talk to an Expert <ArrowRight size={14} />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Company Mega Menu */}
-          <div className="relative">
+          <div 
+            className="relative"
+            onMouseEnter={() => handleMouseEnter('company')}
+            onMouseLeave={handleMouseLeave}
+          >
             <button
               onClick={() => toggleDropdown('company')}
               className={`flex items-center gap-1 text-gray-700 font-medium hover:text-red-600 transition px-3 py-2 text-sm ${openDropdown === 'company' ? 'text-red-600' : ''}`}
@@ -258,44 +316,56 @@ export default function Header() {
               <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === 'company' ? 'rotate-180' : ''}`} />
             </button>
             
-            {openDropdown === 'company' && (
-              <div className="absolute left-0 mt-2 w-[400px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50">
-                <div className="grid grid-cols-2 gap-0">
-                  <div className="p-6">
-                    <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider border-l-2 border-red-500 pl-3">
-                      Company
-                    </h3>
-                    <ul className="space-y-3">
-                      {companyItems.map((item) => (
-                        <li key={item.name}>
-                          <Link
-                            href={item.href}
-                            className="block p-2 rounded-lg hover:bg-gray-50 transition"
-                            onClick={() => setOpenDropdown(null)}
-                          >
-                            <div className="font-medium text-gray-800 hover:text-red-600">{item.name}</div>
-                            <div className="text-xs text-gray-400">{item.description}</div>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="bg-gradient-to-br from-red-50 to-blue-50 p-6">
-                    <Activity size={32} className="mb-3 text-red-500" />
-                    <h4 className="font-bold text-gray-900 mb-2">12+ Years</h4>
-                    <p className="text-xs text-gray-600 mb-4">Of industry experience serving Africa</p>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-bold text-red-600">500+</span>
-                      <span className="text-gray-500">Corporate Clients</span>
+            <AnimatePresence>
+              {openDropdown === 'company' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute left-1/2 -translate-x-1/2 mt-2 w-[500px] max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50"
+                >
+                  <div className="grid grid-cols-5 gap-0">
+                    <div className="col-span-3 p-6">
+                      <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider border-l-2 border-red-500 pl-3">
+                        Company
+                      </h3>
+                      <ul className="space-y-3">
+                        {companyItems.map((item) => (
+                          <li key={item.name}>
+                            <Link
+                              href={item.href}
+                              className="block p-2 rounded-lg hover:bg-gray-50 transition"
+                              onClick={() => setOpenDropdown(null)}
+                            >
+                              <div className="font-medium text-gray-800 hover:text-red-600">{item.name}</div>
+                              <div className="text-xs text-gray-400">{item.description}</div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="col-span-2 bg-gradient-to-br from-red-50 to-blue-50 p-6">
+                      <Activity size={32} className="mb-3 text-red-500" />
+                      <h4 className="font-bold text-gray-900 mb-2">12+ Years</h4>
+                      <p className="text-xs text-gray-600 mb-4">Of industry experience serving Africa</p>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="font-bold text-red-600">500+</span>
+                        <span className="text-gray-500">Corporate Clients</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Resources Mega Menu */}
-          <div className="relative">
+          <div 
+            className="relative"
+            onMouseEnter={() => handleMouseEnter('resources')}
+            onMouseLeave={handleMouseLeave}
+          >
             <button
               onClick={() => toggleDropdown('resources')}
               className={`flex items-center gap-1 text-gray-700 font-medium hover:text-red-600 transition px-3 py-2 text-sm ${openDropdown === 'resources' ? 'text-red-600' : ''}`}
@@ -304,39 +374,47 @@ export default function Header() {
               <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === 'resources' ? 'rotate-180' : ''}`} />
             </button>
             
-            {openDropdown === 'resources' && (
-              <div className="absolute left-0 mt-2 w-[400px] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50">
-                <div className="grid grid-cols-2 gap-0">
-                  <div className="p-6">
-                    <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider border-l-2 border-red-500 pl-3">
-                      Resources
-                    </h3>
-                    <ul className="space-y-3">
-                      {resourceItems.map((item) => (
-                        <li key={item.name}>
-                          <Link
-                            href={item.href}
-                            className="block p-2 rounded-lg hover:bg-gray-50 transition"
-                            onClick={() => setOpenDropdown(null)}
-                          >
-                            <div className="font-medium text-gray-800 hover:text-red-600">{item.name}</div>
-                            <div className="text-xs text-gray-400">{item.description}</div>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
+            <AnimatePresence>
+              {openDropdown === 'resources' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute left-1/2 -translate-x-1/2 mt-2 w-[500px] max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50"
+                >
+                  <div className="grid grid-cols-5 gap-0">
+                    <div className="col-span-3 p-6">
+                      <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider border-l-2 border-red-500 pl-3">
+                        Resources
+                      </h3>
+                      <ul className="space-y-3">
+                        {resourceItems.map((item) => (
+                          <li key={item.name}>
+                            <Link
+                              href={item.href}
+                              className="block p-2 rounded-lg hover:bg-gray-50 transition"
+                              onClick={() => setOpenDropdown(null)}
+                            >
+                              <div className="font-medium text-gray-800 hover:text-red-600">{item.name}</div>
+                              <div className="text-xs text-gray-400">{item.description}</div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="col-span-2 bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+                      <FileText size={32} className="mb-3 text-blue-500" />
+                      <h4 className="font-bold text-gray-900 mb-2">Technical Resources</h4>
+                      <p className="text-xs text-gray-600 mb-4">Download catalogs, datasheets, and guides</p>
+                      <Link href="/resources" className="text-red-600 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
+                        View Resources <ArrowRight size={14} />
+                      </Link>
+                    </div>
                   </div>
-                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-                    <FileText size={32} className="mb-3 text-blue-500" />
-                    <h4 className="font-bold text-gray-900 mb-2">Technical Resources</h4>
-                    <p className="text-xs text-gray-600 mb-4">Download catalogs, datasheets, and guides</p>
-                    <Link href="/resources" className="text-red-600 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
-                      View Resources <ArrowRight size={14} />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Primary CTA Buttons */}
