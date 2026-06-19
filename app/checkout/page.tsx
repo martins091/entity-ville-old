@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, 
   Truck, 
   Lock, 
-  ChevronRight, 
   CreditCard,
   MapPin,
   Phone,
@@ -33,6 +33,7 @@ const colors = {
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, totalPrice } = useCart();
+  const hasQuoteItems = items.some((item) => item.requiresQuote || !Number(item.price || 0));
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -360,7 +361,7 @@ export default function CheckoutPage() {
                 </>
               ) : (
                 <>
-                  <span>Place Order</span>
+                  <span>{hasQuoteItems ? 'Submit Quote Request' : 'Place Order'}</span>
                   <CreditCard size={20} className="group-hover:translate-x-1 transition" />
                 </>
               )}
@@ -399,11 +400,15 @@ export default function CheckoutPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{item.name}</p>
-                      <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
-                      <p className="text-sm font-bold" style={{ color: colors.primary }}>
-                        ₦{((item.price || 0) * item.quantity).toLocaleString()}
-                      </p>
+	                      <p className="text-sm font-semibold text-gray-900 truncate">{item.name}</p>
+	                      <p className="text-xs text-gray-500">
+	                        Qty: {item.quantity}{item.partNumber ? ` / Part No: ${item.partNumber}` : ''}
+	                      </p>
+	                      <p className="text-sm font-bold" style={{ color: colors.primary }}>
+	                        {item.requiresQuote || !Number(item.price || 0)
+	                          ? 'Price on Request'
+	                          : `₦${((item.price || 0) * item.quantity).toLocaleString()}`}
+	                      </p>
                     </div>
                   </div>
                 ))}
@@ -412,23 +417,32 @@ export default function CheckoutPage() {
               <div className="pt-4 space-y-3 border-t border-gray-200">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Subtotal</span>
-                  <span className="font-semibold text-gray-900">₦{totalPrice.toLocaleString()}</span>
+	                  <span className="font-semibold text-gray-900">{hasQuoteItems ? 'Quote Required' : `₦${totalPrice.toLocaleString()}`}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Shipping</span>
                   <span className="font-semibold text-green-600">
-                    {totalPrice > 500000 ? "Free" : "Calculated"}
+	                    {hasQuoteItems ? "Confirmed with quote" : totalPrice > 500000 ? "Free" : "Calculated"}
                   </span>
                 </div>
                 <div className="flex justify-between text-lg font-black pt-3 border-t border-gray-200">
                   <span>Total</span>
-                  <span style={{ color: colors.primary }}>₦{totalPrice.toLocaleString()}</span>
-                </div>
-              </div>
+	                  <span style={{ color: colors.primary }}>{hasQuoteItems ? 'Quote Required' : `₦${totalPrice.toLocaleString()}`}</span>
+	                </div>
+	              </div>
 
-              {/* Shipping Note */}
-              {totalPrice < 500000 && (
-                <div className="mt-4 p-3 rounded-xl bg-blue-50 flex items-center gap-2">
+	              {/* Shipping Note */}
+	              {hasQuoteItems && (
+	                <div className="mt-4 p-3 rounded-xl bg-red-50 flex items-center gap-2">
+	                  <FileText size={16} style={{ color: colors.primary }} />
+	                  <p className="text-xs text-gray-700">
+	                    Submit this request and our team will confirm price, availability, and delivery details.
+	                  </p>
+	                </div>
+	              )}
+
+	              {!hasQuoteItems && totalPrice < 500000 && (
+	                <div className="mt-4 p-3 rounded-xl bg-blue-50 flex items-center gap-2">
                   <Truck size={16} style={{ color: colors.secondary }} />
                   <p className="text-xs text-gray-600">
                     Add <span className="font-bold" style={{ color: colors.primary }}>₦{(500000 - totalPrice).toLocaleString()}</span> more for free shipping
@@ -478,7 +492,3 @@ export default function CheckoutPage() {
     </main>
   );
 }
-
-// Add missing import
-import Link from 'next/link';
-import { AnimatePresence } from 'framer-motion';

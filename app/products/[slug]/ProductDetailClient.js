@@ -2,7 +2,6 @@
 
 import Header from '@/components/header';
 import Footer from '@/components/footer';
-import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -30,6 +29,7 @@ import { useCart } from '@/hooks/use-cart';
 import { useEffect, useState } from 'react';
 import { productsMap } from '@/lib/products';
 import { fetchStorefrontProductBySlug } from '@/lib/supabase/catalog';
+import ProductImage from '@/components/product-image';
 import {
   Dialog,
   DialogClose,
@@ -54,13 +54,18 @@ export default function ProductDetailClient({ slug }) {
   const [isCartModalOpen, setCartModalOpen] = useState(false);
   const [activeImage, setActiveImage] = useState(product?.images?.[0] || product?.image);
   const [isWishlist, setIsWishlist] = useState(false);
-  const hasPrice = Number(product?.price || 0) > 0;
+  const [selectedVariant, setSelectedVariant] = useState(product?.variants?.[0] || null);
+  const variants = product?.variants || [];
+  const selectedPrice = Number(selectedVariant?.price ?? product?.price ?? 0);
+  const hasPrice = selectedPrice > 0;
+  const selectedStock = Number(selectedVariant?.stock_quantity ?? 0);
 
   useEffect(() => {
     fetchStorefrontProductBySlug(slug).then((item) => {
       if (!item) return;
       setProduct(item);
       setActiveImage(item.images?.[0] || item.image);
+      setSelectedVariant(item.variants?.[0] || null);
     });
   }, [slug]);
 
@@ -98,15 +103,21 @@ export default function ProductDetailClient({ slug }) {
   }
 
   const handleAdd = () => {
-    if (!hasPrice) return;
+    const cartId = selectedVariant
+      ? `${product.slug}:${selectedVariant.id || selectedVariant.part_number || selectedVariant.size}`
+      : product.slug;
 
     addItem(
       {
-        id: product.slug,
-        name: product.name,
-        price: product.price,
+        id: cartId,
+        name: selectedVariant?.size ? `${product.name} - ${selectedVariant.size}` : product.name,
+        price: selectedPrice,
         image: activeImage,
         slug: product.slug,
+        size: selectedVariant?.size,
+        weight: selectedVariant?.weight,
+        partNumber: selectedVariant?.part_number,
+        requiresQuote: !hasPrice,
       },
       qty
     );
@@ -152,7 +163,7 @@ export default function ProductDetailClient({ slug }) {
                 transition={{ duration: 0.5 }}
                 className="relative h-96 lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl mb-4 group"
               >
-                <Image
+                <ProductImage
                   src={activeImage}
                   alt={product.name}
                   fill
@@ -200,7 +211,7 @@ export default function ProductDetailClient({ slug }) {
                       }`}
                       style={activeImage === img ? { borderColor: colors.primary } : {}}
                     >
-                      <Image src={img} alt={`${product.name} view ${i + 1}`} fill className="object-cover" />
+                      <ProductImage src={img} alt={`${product.name} view ${i + 1}`} fill className="object-cover" />
                     </motion.div>
                   ))}
                 </div>
@@ -244,12 +255,12 @@ export default function ProductDetailClient({ slug }) {
                 <span className="text-xs text-gray-500 uppercase tracking-wider">Price</span>
                 <div className="flex items-baseline gap-3">
                   <span className="text-4xl font-black" style={{ color: colors.primary }}>
-                    {hasPrice ? `₦${product.price.toLocaleString()}` : 'Request Quote'}
+                    {hasPrice ? `₦${selectedPrice.toLocaleString()}` : 'Price on Request'}
                   </span>
                   {hasPrice && (
                     <>
                       <span className="text-sm text-gray-400 line-through">
-                        ₦{(product.price * 1.2).toLocaleString()}
+                        ₦{(selectedPrice * 1.2).toLocaleString()}
                       </span>
                       <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
                         Save 20%
@@ -263,6 +274,66 @@ export default function ProductDetailClient({ slug }) {
               <p className="text-gray-600 leading-relaxed mb-6 border-l-3 pl-4" style={{ borderLeftColor: colors.primary }}>
                 {product.description}
               </p>
+
+              {variants.length > 0 && (
+                <div className="mb-6">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <label className="text-sm font-bold text-gray-800">Choose Size / Variant</label>
+                    <span className="text-xs text-gray-500">{variants.length} option{variants.length === 1 ? '' : 's'} available</span>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {variants.slice(0, 12).map((variant) => {
+                      const isSelected = selectedVariant?.id === variant.id;
+                      const variantPrice = Number(variant.price || 0);
+
+                      return (
+                        <button
+                          key={variant.id || variant.part_number}
+                          type="button"
+                          onClick={() => setSelectedVariant(variant)}
+                          className={`rounded-xl border p-3 text-left transition ${
+                            isSelected
+                              ? 'border-[#C10008] bg-red-50 shadow-sm'
+                              : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="block text-sm font-bold text-gray-900">{variant.size || variant.part_number}</span>
+                          <span className="mt-1 block text-xs text-gray-500">
+                            {variant.part_number}{variant.weight ? ` / ${variant.weight}` : ''}
+                          </span>
+                          <span className="mt-2 block text-sm font-black" style={{ color: variantPrice > 0 ? colors.primary : '#4b5563' }}>
+                            {variantPrice > 0 ? `₦${variantPrice.toLocaleString()}` : 'Price on Request'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {selectedVariant && (
+                <div className="mb-6 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                  <h3 className="mb-3 text-sm font-bold text-gray-800">Selected Product Details</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-xs uppercase tracking-wide text-gray-400">Part Number</span>
+                      <p className="font-mono font-semibold text-gray-900">{selectedVariant.part_number || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs uppercase tracking-wide text-gray-400">Size</span>
+                      <p className="font-semibold text-gray-900">{selectedVariant.size || 'Standard'}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs uppercase tracking-wide text-gray-400">Weight</span>
+                      <p className="font-semibold text-gray-900">{selectedVariant.weight || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs uppercase tracking-wide text-gray-400">Stock</span>
+                      <p className="font-semibold text-gray-900">{selectedStock > 0 ? `${selectedStock} available` : 'Confirm availability'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Features Highlights */}
               <div className="grid grid-cols-2 gap-3 mb-6">
@@ -312,23 +383,21 @@ export default function ProductDetailClient({ slug }) {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
-                  {hasPrice && (
-                    <button
-                      onClick={handleAdd}
-                      className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-bold transition-all duration-300 hover:scale-105 shadow-lg"
-                      style={{ background: colors.gradient }}
-                    >
-                      <ShoppingCart size={18} />
-                      Add to Cart - ₦{(product.price * qty).toLocaleString()}
-                    </button>
-                  )}
+                  <button
+                    onClick={handleAdd}
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-bold transition-all duration-300 hover:scale-105 shadow-lg"
+                    style={{ background: colors.gradient }}
+                  >
+                    <ShoppingCart size={18} />
+                    {hasPrice ? `Add to Cart - ₦${(selectedPrice * qty).toLocaleString()}` : 'Add to Cart for Quote'}
+                  </button>
                   <Link
                     href="/contact"
                     className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-105 border-2"
                     style={{ borderColor: colors.secondary, color: colors.secondary }}
                   >
                     <FileText size={18} />
-                    Request Quote
+                    Talk to Sales
                   </Link>
                 </div>
               </div>
@@ -338,7 +407,9 @@ export default function ProductDetailClient({ slug }) {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-sm font-semibold text-green-600">In Stock</span>
+                    <span className="text-sm font-semibold text-green-600">
+                      {selectedStock > 0 ? 'In Stock' : 'Available to Order'}
+                    </span>
                   </div>
                   <span className="text-xs text-gray-400">Free shipping over ₦500k</span>
                 </div>
@@ -348,7 +419,9 @@ export default function ProductDetailClient({ slug }) {
                     style={{ width: '75%', background: colors.gradient }}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-2">Only 25 units left - order soon!</p>
+                <p className="text-xs text-gray-500 mt-2">
+                  {selectedStock > 0 ? `${selectedStock} units currently listed` : 'Availability will be confirmed after checkout.'}
+                </p>
               </div>
             </motion.div>
           </div>
@@ -495,20 +568,23 @@ export default function ProductDetailClient({ slug }) {
             </div>
             <DialogTitle className="text-2xl font-black">Added to Cart!</DialogTitle>
             <DialogDescription className="text-gray-600">
-              {qty} × {product.name} has been added to your cart.
+              {qty} x {selectedVariant?.size ? `${product.name} - ${selectedVariant.size}` : product.name} has been added to your cart.
             </DialogDescription>
           </DialogHeader>
 
           <div className="mt-4 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4">
             <div className="flex items-center gap-4">
               <div className="relative h-20 w-20 rounded-xl overflow-hidden bg-white shadow-md">
-                <Image src={activeImage} alt={product.name} fill className="object-cover" />
+                <ProductImage src={activeImage} alt={product.name} fill className="object-cover" />
               </div>
               <div className="flex-1">
-                <p className="font-bold text-gray-900">{product.name}</p>
+                <p className="font-bold text-gray-900">{selectedVariant?.size ? `${product.name} - ${selectedVariant.size}` : product.name}</p>
                 <p className="text-sm text-gray-500">Quantity: {qty}</p>
+                {selectedVariant?.part_number && (
+                  <p className="text-xs text-gray-400">Part No: {selectedVariant.part_number}</p>
+                )}
                 <p className="text-lg font-bold" style={{ color: colors.primary }}>
-                  ₦{(product.price * qty).toLocaleString()}
+                  {hasPrice ? `₦${(selectedPrice * qty).toLocaleString()}` : 'Price on Request'}
                 </p>
               </div>
             </div>

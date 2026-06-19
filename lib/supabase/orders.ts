@@ -7,6 +7,11 @@ export type OrderItem = {
   quantity: number;
   image?: string;
   slug?: string;
+  size?: string;
+  weight?: string;
+  partNumber?: string;
+  material?: string;
+  requiresQuote?: boolean;
 };
 
 export type CustomerDetails = {

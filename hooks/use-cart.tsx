@@ -9,6 +9,11 @@ type CartItem = {
   quantity: number;
   image?: string;
   slug?: string;
+  size?: string;
+  weight?: string;
+  partNumber?: string;
+  material?: string;
+  requiresQuote?: boolean;
 };
 
 type CartContextValue = {
@@ -47,7 +52,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = (item: Omit<CartItem, 'quantity'>, qty = 1) => {
     setItems((prev) => {
-      const idx = prev.findIndex((p) => p.id === item.id || p.slug === item.slug);
+      const idx = prev.findIndex((p) => p.id === item.id);
       if (idx > -1) {
         const copy = [...prev];
         copy[idx].quantity += qty;
@@ -62,7 +67,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateQty = (id: string | number, qty: number) => {
-    setItems((prev) => prev.map((p) => (p.id === id || p.slug === id ? { ...p, quantity: Math.max(0, qty) } : p)));
+    setItems((prev) => {
+      if (qty <= 0) {
+        return prev.filter((p) => p.id !== id && p.slug !== id);
+      }
+
+      return prev.map((p) => (p.id === id || p.slug === id ? { ...p, quantity: qty } : p));
+    });
   };
 
   const clear = () => setItems([]);

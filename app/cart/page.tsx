@@ -29,7 +29,8 @@ const colors = {
 };
 
 export default function CartPage() {
-  const { items, updateQty, removeItem, totalItems, totalPrice } = useCart();
+  const { items, updateQty, removeItem, clear, totalItems, totalPrice } = useCart();
+  const hasQuoteItems = items.some((item) => item.requiresQuote || !Number(item.price || 0));
 
   const incrementQty = (id: string | number, currentQty: number) => {
     updateQty(id, currentQty + 1);
@@ -107,7 +108,7 @@ export default function CartPage() {
                 <div className="text-right">
                   <div className="text-sm text-gray-500">Total Amount</div>
                   <div className="text-3xl font-black" style={{ color: colors.primary }}>
-                    ₦{totalPrice.toLocaleString()}
+                    {hasQuoteItems ? 'Quote Required' : `₦${totalPrice.toLocaleString()}`}
                   </div>
                 </div>
               )}
@@ -147,7 +148,7 @@ export default function CartPage() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold text-gray-900">Cart Items ({totalItems})</h2>
                 <button 
-                  onClick={() => items.forEach(item => updateQty(item.id, 0))}
+                  onClick={clear}
                   className="text-xs text-gray-400 hover:text-red-500 transition"
                 >
                   Clear All
@@ -196,7 +197,9 @@ export default function CartPage() {
                               }}>
                               {item.name}
                             </h3>
-                            <p className="text-xs text-gray-400 mt-0.5">Premium Quality</p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {[item.partNumber && `Part No: ${item.partNumber}`, item.size, item.weight].filter(Boolean).join(' / ') || 'Premium Quality'}
+                            </p>
                           </div>
                           <button 
                             onClick={() => removeItem(item.id)}
@@ -227,14 +230,18 @@ export default function CartPage() {
                             </button>
                           </div>
 
-                          {/* Price */}
+	                          {/* Price */}
                           <div className="text-right">
                             <div className="text-lg font-bold" style={{ color: colors.primary }}>
-                              ₦{((item.price || 0) * item.quantity).toLocaleString()}
+                              {item.requiresQuote || !Number(item.price || 0)
+                                ? 'Price on Request'
+                                : `₦${((item.price || 0) * item.quantity).toLocaleString()}`}
                             </div>
-                            <div className="text-xs text-gray-400 line-through">
-                              ₦{((item.price || 0) * 1.2 * item.quantity).toLocaleString()}
-                            </div>
+                            {!item.requiresQuote && Number(item.price || 0) > 0 && (
+                              <div className="text-xs text-gray-400 line-through">
+                                ₦{((item.price || 0) * 1.2 * item.quantity).toLocaleString()}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -280,20 +287,24 @@ export default function CartPage() {
                 <div className="space-y-3 pb-4 border-b border-gray-200">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Subtotal ({totalItems} items)</span>
-                    <span className="font-semibold text-gray-900">₦{totalPrice.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Original Price</span>
-                    <span className="text-gray-400 line-through">₦{originalTotal.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">You Save</span>
-                    <span className="font-semibold text-green-600">-₦{savings.toLocaleString()}</span>
-                  </div>
+	                    <span className="font-semibold text-gray-900">{hasQuoteItems ? 'Quote Required' : `₦${totalPrice.toLocaleString()}`}</span>
+	                  </div>
+	                  {!hasQuoteItems && (
+	                    <>
+	                      <div className="flex justify-between text-sm">
+	                        <span className="text-gray-500">Original Price</span>
+	                        <span className="text-gray-400 line-through">₦{originalTotal.toLocaleString()}</span>
+	                      </div>
+	                      <div className="flex justify-between text-sm">
+	                        <span className="text-gray-500">You Save</span>
+	                        <span className="font-semibold text-green-600">-₦{savings.toLocaleString()}</span>
+	                      </div>
+	                    </>
+	                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Shipping</span>
                     <span className="font-semibold text-green-600">
-                      {totalPrice > 500000 ? "Free" : "Calculated at checkout"}
+	                      {hasQuoteItems ? "Confirmed with quote" : totalPrice > 500000 ? "Free" : "Calculated at checkout"}
                     </span>
                   </div>
                 </div>
@@ -301,11 +312,20 @@ export default function CartPage() {
                 <div className="pt-4 space-y-2">
                   <div className="flex justify-between text-lg font-black">
                     <span>Total</span>
-                    <span style={{ color: colors.primary }}>₦{totalPrice.toLocaleString()}</span>
-                  </div>
-                  
-                  {totalPrice < 500000 && (
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50 mt-3">
+	                    <span style={{ color: colors.primary }}>{hasQuoteItems ? 'Quote Required' : `₦${totalPrice.toLocaleString()}`}</span>
+	                  </div>
+	                  
+	                  {hasQuoteItems && (
+	                    <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 mt-3">
+	                      <ShoppingCart size={16} style={{ color: colors.primary }} />
+	                      <p className="text-xs text-gray-700 flex-1">
+	                        Some products need a confirmed price. Submit checkout and our team will respond with a quote.
+	                      </p>
+	                    </div>
+	                  )}
+
+	                  {!hasQuoteItems && totalPrice < 500000 && (
+	                    <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50 mt-3">
                       <Truck size={16} style={{ color: colors.secondary }} />
                       <p className="text-xs text-gray-600 flex-1">
                         Add <span className="font-bold" style={{ color: colors.primary }}>₦{(500000 - totalPrice).toLocaleString()}</span> more for free shipping
@@ -313,7 +333,7 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  {totalPrice >= 500000 && (
+	                  {!hasQuoteItems && totalPrice >= 500000 && (
                     <div className="flex items-center gap-2 p-3 rounded-xl bg-green-50 mt-3">
                       <Truck size={16} className="text-green-600" />
                       <p className="text-xs text-green-700 font-semibold">Congratulations! You qualify for free shipping</p>

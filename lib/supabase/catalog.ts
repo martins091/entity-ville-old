@@ -45,6 +45,7 @@ export interface StorefrontProduct {
   features: string[];
   specs: string[];
   applications: string[];
+  variants: ProductVariant[];
   active: boolean;
 }
 
@@ -83,6 +84,7 @@ function familyToStorefrontProduct(family: ProductFamily): StorefrontProduct {
       family.category?.main_category || 'Electrical infrastructure',
       family.category?.name || 'Grounding and lightning protection systems',
     ],
+    variants,
     active: true,
   };
 }
