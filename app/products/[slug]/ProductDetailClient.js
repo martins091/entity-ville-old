@@ -48,7 +48,8 @@ const colors = {
 };
 
 export default function ProductDetailClient({ slug }) {
-  const [product, setProduct] = useState(productsMap[slug]);
+  const [product, setProduct] = useState(productsMap[slug] || null);
+  const [loading, setLoading] = useState(true);
   const { addItem } = useCart();
   const [qty, setQty] = useState(1);
   const [isCartModalOpen, setCartModalOpen] = useState(false);
@@ -61,17 +62,47 @@ export default function ProductDetailClient({ slug }) {
   const selectedStock = Number(selectedVariant?.stock_quantity ?? 0);
 
   useEffect(() => {
+    setLoading(true);
     fetchStorefrontProductBySlug(slug).then((item) => {
-      if (!item) return;
+      if (!item) {
+        setLoading(false);
+        setProduct(null);
+        return;
+      }
       setProduct(item);
       setActiveImage(item.images?.[0] || item.image);
       setSelectedVariant(item.variants?.[0] || null);
+      setLoading(false);
     });
   }, [slug]);
 
   const incrementQty = () => setQty(prev => prev + 1);
   const decrementQty = () => setQty(prev => Math.max(1, prev - 1));
 
+  // Loading State
+  if (loading) {
+    return (
+      <main className="bg-white min-h-screen">
+        <Header />
+        <div className="min-h-screen flex items-center justify-center">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <div className="inline-flex p-4 rounded-full bg-gradient-to-r from-red-50 to-blue-50 mb-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#C10008] border-t-transparent"></div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Loading product...</h2>
+            <p className="text-gray-500 mt-2">Please wait while we fetch the product details</p>
+          </motion.div>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
+
+  // Not Found State - Only shown after loading is complete
   if (!product) {
     return (
       <main className="bg-white min-h-screen">
