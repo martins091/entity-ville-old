@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 80" width="260" height="80">
+  <rect width="260" height="80" fill="white"/>
+  <circle cx="32" cy="40" r="29" fill="none" stroke="#FF5000" stroke-width="4" opacity="0.2"/>
+  <circle cx="32" cy="40" r="22" fill="none" stroke="#FF5000" stroke-width="4" opacity="0.4"/>
+  <circle cx="32" cy="40" r="15" fill="none" stroke="#FF5000" stroke-width="4" opacity="0.65"/>
+  <circle cx="32" cy="40" r="8" fill="none" stroke="#FF5000" stroke-width="4" opacity="0.85"/>
+  <circle cx="32" cy="40" r="3" fill="#FF5000"/>
+  <text x="155" y="52" font-family="Arial Black, Arial" font-weight="900" font-size="34" fill="#FF5000" text-anchor="middle" letter-spacing="1">LEDVANCE</text>
+</svg>
