@@ -6,8 +6,18 @@ import Footer from '@/components/footer';
 import Image from 'next/image';
 import Link from 'next/link';
 
-export default function CareersPage() {
-  const [formData, setFormData] = useState({
+interface FormData {
+  name: string;
+  age: string;
+  email: string;
+  phone: string;
+  experience: string;
+  designation: string;
+  portfolio: string;
+}
+
+export default function CareersClient() {
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     age: '',
     email: '',
@@ -19,7 +29,7 @@ export default function CareersPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,

@@ -6,8 +6,17 @@ import Footer from '@/components/footer';
 import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 import Link from 'next/link';
 
-export default function ContactPage() {
-  const [formData, setFormData] = useState({
+interface FormData {
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  subject: string;
+  message: string;
+}
+
+export default function ContactClient() {
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     phone: '',
@@ -43,7 +52,6 @@ export default function ContactPage() {
 
       if (res.ok) {
         setSuccessMessage('✅ Thank you! Your message has been sent successfully.');
-
         setFormData({
           name: '',
           email: '',
@@ -135,17 +143,67 @@ export default function ContactPage() {
                 <h3 className="text-2xl font-black text-foreground mb-6">Send us a Message</h3>
 
                 <div className="grid md:grid-cols-2 gap-5 mb-5">
-                  <input name="name" value={formData.name} onChange={handleChange} placeholder="Full Name *" required className="w-full px-4 py-2.5 border-2 border-primary/20 rounded-lg" />
-                  <input name="email" value={formData.email} onChange={handleChange} placeholder="Email *" required className="w-full px-4 py-2.5 border-2 border-primary/20 rounded-lg" />
-                  <input name="phone" value={formData.phone} onChange={handleChange} placeholder="Phone" className="w-full px-4 py-2.5 border-2 border-primary/20 rounded-lg" />
-                  <input name="company" value={formData.company} onChange={handleChange} placeholder="Company" className="w-full px-4 py-2.5 border-2 border-primary/20 rounded-lg" />
+                  <input 
+                    type="text"
+                    name="name" 
+                    value={formData.name} 
+                    onChange={handleChange} 
+                    placeholder="Full Name *" 
+                    required 
+                    className="w-full px-4 py-2.5 border-2 border-primary/20 rounded-lg focus:border-primary focus:outline-none transition bg-white text-sm" 
+                  />
+                  <input 
+                    type="email"
+                    name="email" 
+                    value={formData.email} 
+                    onChange={handleChange} 
+                    placeholder="Email *" 
+                    required 
+                    className="w-full px-4 py-2.5 border-2 border-primary/20 rounded-lg focus:border-primary focus:outline-none transition bg-white text-sm" 
+                  />
+                  <input 
+                    type="tel"
+                    name="phone" 
+                    value={formData.phone} 
+                    onChange={handleChange} 
+                    placeholder="Phone" 
+                    className="w-full px-4 py-2.5 border-2 border-primary/20 rounded-lg focus:border-primary focus:outline-none transition bg-white text-sm" 
+                  />
+                  <input 
+                    type="text"
+                    name="company" 
+                    value={formData.company} 
+                    onChange={handleChange} 
+                    placeholder="Company" 
+                    className="w-full px-4 py-2.5 border-2 border-primary/20 rounded-lg focus:border-primary focus:outline-none transition bg-white text-sm" 
+                  />
                 </div>
 
-                <input name="subject" value={formData.subject} onChange={handleChange} placeholder="Subject *" required className="w-full px-4 py-2.5 border-2 border-primary/20 rounded-lg mb-5" />
+                <input 
+                  type="text"
+                  name="subject" 
+                  value={formData.subject} 
+                  onChange={handleChange} 
+                  placeholder="Subject *" 
+                  required 
+                  className="w-full px-4 py-2.5 border-2 border-primary/20 rounded-lg focus:border-primary focus:outline-none transition bg-white text-sm mb-5" 
+                />
 
-                <textarea name="message" value={formData.message} onChange={handleChange} placeholder="Message *" required rows={5} className="w-full px-4 py-2.5 border-2 border-primary/20 rounded-lg mb-6" />
+                <textarea 
+                  name="message" 
+                  value={formData.message} 
+                  onChange={handleChange} 
+                  placeholder="Message *" 
+                  required 
+                  rows={5} 
+                  className="w-full px-4 py-2.5 border-2 border-primary/20 rounded-lg focus:border-primary focus:outline-none transition bg-white text-sm mb-6" 
+                />
 
-                <button type="submit" disabled={isSubmitting} className="w-full px-8 py-3 bg-accent text-white rounded-lg font-bold">
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting} 
+                  className="w-full px-8 py-3 bg-accent text-white rounded-lg hover:bg-red-600 transition font-bold text-base shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   {isSubmitting ? 'Sending...' : 'Send Message'}
                 </button>
 
@@ -160,7 +218,7 @@ export default function ContactPage() {
 
           <div className="mt-8 p-6 bg-blue-50 rounded-2xl border border-primary/20 text-center">
             <p className="font-semibold mb-2">Looking for specific products?</p>
-            <Link href="/" className="inline-block px-5 py-2 bg-primary text-white rounded-lg font-bold text-sm">
+            <Link href="/" className="inline-block px-5 py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition">
               View All Products
             </Link>
           </div>
