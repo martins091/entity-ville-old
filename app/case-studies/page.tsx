@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import Image from 'next/image';
@@ -151,4 +152,10 @@ export default function CaseStudiesPage() {
       <Footer />
     </main>
   );
+}
+
+export const metadata: Metadata = {
+  title: 'Case Studies — Entity Ville Ltd',
+  description: 'Case studies showcasing Entity Ville Ltd supply of electrical components for telecoms, manufacturing, renewable energy, commercial buildings, and utilities across Africa.',
+  alternates: { canonical: 'https://entityville.com/case-studies' },
 }

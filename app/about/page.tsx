@@ -1,4 +1,6 @@
-'use client';
+ 'use client';
+
+import type { Metadata } from 'next'
 
 import Header from '@/components/header';
 import Footer from '@/components/footer';
@@ -244,4 +246,11 @@ export default function About() {
       <Footer />
     </main>
   );
+}
+
+export const metadata: Metadata = {
+  title: 'About Entity Ville Ltd — Electrical Components Supplier',
+  description:
+    'Learn about Entity Ville Ltd — our mission, vision, experience, and the premium electrical components we supply across Africa, including ABB, Schneider, and Siemens products.',
+  alternates: { canonical: 'https://entityville.com/about' },
 }

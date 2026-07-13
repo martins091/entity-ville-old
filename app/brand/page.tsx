@@ -1,4 +1,5 @@
-'use client';
+
+import type { Metadata } from 'next'
 
 import Header from '@/components/header';
 import Footer from '@/components/footer';
@@ -79,4 +80,10 @@ export default function BrandsPage() {
       <Footer />
     </main>
   );
+}
+
+export const metadata: Metadata = {
+  title: 'Brands — Entity Ville Ltd',
+  description: 'Trusted brands partnered with Entity Ville Ltd including ABB, Schneider Electric, Siemens, Chint, and more — premium electrical components and solar solutions.',
+  alternates: { canonical: 'https://entityville.com/brand' },
 }

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://entityville.com/sitemap.xml
+
+# If you need to block staging or development, add rules here.
