@@ -1,10 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import Image from 'next/image';
 import { Calendar, User, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { fetchArticleBySlug } from '@/lib/supabase/articles';
 
 const newsArticles = {
   'cable-tray-selection-guide': {
@@ -317,8 +319,65 @@ Don't wait for failure - proactive upgrades improve safety, reliability, and eff
   },
 };
 
+function formatArticleDate(value) {
+  if (!value) return '';
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+function normalizeDetailArticle(article) {
+  if (!article) return null;
+
+  return {
+    ...article,
+    image: article.image || '/images/electric.png',
+    date: formatArticleDate(article.date || article.published_at),
+  };
+}
+
 export default function NewsDetailClient({ slug }) {
-  const article = newsArticles[slug];
+  const [article, setArticle] = useState(() => normalizeDetailArticle(newsArticles[slug]));
+  const [loading, setLoading] = useState(() => !newsArticles[slug]);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(!newsArticles[slug]);
+
+    fetchArticleBySlug(slug).then((loadedArticle) => {
+      if (!mounted || !loadedArticle) return;
+      setArticle(normalizeDetailArticle(loadedArticle));
+    }).finally(() => {
+      if (mounted) setLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [slug]);
+
+  if (!article && loading) {
+    return (
+      <main className="bg-white text-foreground">
+        <Header />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Loading article</p>
+            <h1 className="mt-3 text-4xl font-black text-foreground">Please wait...</h1>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
 
   if (!article) {
     return (

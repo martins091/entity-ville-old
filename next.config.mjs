@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "export", // 👈 THIS is required for cPanel static hosting
-
   typescript: {
     ignoreBuildErrors: true,
   },

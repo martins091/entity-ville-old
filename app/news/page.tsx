@@ -4,6 +4,7 @@ import Footer from '@/components/footer';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, User, ArrowRight } from 'lucide-react';
+import { fetchArticles, type Article } from '@/lib/supabase/articles';
 
 const articles = [
   {
@@ -109,6 +110,14 @@ const articles = [
 ];
 
 export default function NewsPage() {
+  const [loadedArticles, setLoadedArticles] = useState<Article[]>(
+    articles.map((article) => ({ ...article, content: article.excerpt }))
+  );
+
+  useEffect(() => {
+    fetchArticles().then(setLoadedArticles);
+  }, []);
+
   return (
     <main className="bg-white text-foreground">
       <Header />
@@ -133,7 +142,7 @@ export default function NewsPage() {
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {articles.map((article) => (
+            {loadedArticles.map((article) => (
               <Link 
                 key={article.id} 
                 href={`/news/${article.slug}`} 
@@ -170,7 +179,7 @@ export default function NewsPage() {
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Calendar size={14} className="text-accent" />
                       <span className="font-semibold">
-                        {new Date(article.date).toLocaleDateString('en-US', {
+                        {new Date(article.date || article.published_at || '').toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric',

@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[63810,["/_next/static/chunks/0bi47d-rje44~.js","/_next/static/chunks/0_879ixarc_93.js","/_next/static/chunks/0s9anzq_z0mjv.js","/_next/static/chunks/0noyzmxc6-f~y.js","/_next/static/chunks/10jc79ql2xv00.js","/_next/static/chunks/089yd8anthjl..js"],"default"]
+3:I[97367,["/_next/static/chunks/0bi47d-rje44~.js","/_next/static/chunks/0_879ixarc_93.js"],"OutletBoundary"]
+4:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"slug":"busbars"}],[["$","script","script-0",{"src":"/_next/static/chunks/0s9anzq_z0mjv.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/0noyzmxc6-f~y.js","async":true}],["$","script","script-2",{"src":"/_next/static/chunks/10jc79ql2xv00.js","async":true}],["$","script","script-3",{"src":"/_next/static/chunks/089yd8anthjl..js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"RGpKILb4wRfBDRXmFXY4I"}
+5:null

@@ -7,13 +7,18 @@ import ClientsSection from '@/components/clients-section';
 import WhyChooseUs from '@/components/why-choose-us';
 import CTASection from '@/components/cta-section';
 import Footer from '@/components/footer';
+import { fetchProductFamilies } from '@/lib/supabase/catalog';
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  const productFamilies = await fetchProductFamilies();
+
   return (
     <main className="bg-background text-foreground">
       <Header />
       <HeroCarousel />
-      <ProductsSection />
+      <ProductsSection initialProductFamilies={productFamilies} />
       <IndustriesSection />
       <ClientsSection />
       <WhyChooseUs />

@@ -1,167 +1,539 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X, ChevronDown, ShoppingCart, Briefcase, Newspaper, FileText, Zap, Shield, Package, Activity, Plane, ArrowRight, Search } from 'lucide-react';
+import { useCart } from '@/hooks/use-cart';
 import Image from 'next/image';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const products = [
-  { name: 'Cable Trays & Ladders', href: '/products/cable-trays' },
-  { name: 'Cable Lugs', href: '/products/cable-lugs' },
-  { name: 'Earth Rods & Earthing Systems', href: '/products/earth-rods' },
-  { name: 'Circuit Breakers', href: '/products/circuit-breakers' },
-  { name: 'Conduit Pipes & Fittings', href: '/products/conduits' },
-  { name: 'Tinned Copper Busbars', href: '/products/busbars' },
-  { name: 'Lightning Arrestors', href: '/products/lightning-arrestors' },
-  { name: 'Wiring Devices', href: '/products/wiring-devices' },
-  { name: 'Inspection Chambers', href: '/products/inspection-chambers' },
-  { name: 'Solar Materials', href: '/products/solar-materials' },
-];
+const supabase = getSupabaseBrowserClient();
+
+const colors = {
+  primary: "#C10008",
+  secondary: "#027FFF",
+  gradient: "linear-gradient(135deg, #C10008 0%, #027FFF 100%)",
+};
 
 const industries = [
-  { name: 'Oil & Gas', href: '/industries/oil-gas' },
-  { name: 'Telecommunications', href: '/industries/telecom' },
-  { name: 'Manufacturing', href: '/industries/manufacturing' },
-  { name: 'Real Estate & Construction', href: '/industries/real-estate' },
-  { name: 'Utilities', href: '/industries/utilities' },
-  { name: 'Renewable Energy', href: '/industries/renewable-energy' },
+  { name: 'Oil & Gas', href: '/industries/oil-gas', icon: '🛢️' },
+  { name: 'Telecommunications', href: '/industries/telecom', icon: '📡' },
+  { name: 'Manufacturing', href: '/industries/manufacturing', icon: '🏭' },
+  { name: 'Real Estate & Construction', href: '/industries/real-estate', icon: '🏗️' },
+  { name: 'Utilities', href: '/industries/utilities', icon: '⚡' },
+  { name: 'Renewable Energy', href: '/industries/renewable-energy', icon: '☀️' },
 ];
+
+const companyItems = [
+  { name: 'About Us', href: '/about', description: 'Learn about our story' },
+  { name: 'Brand', href: '/brand', description: 'Our values & culture' },
+  { name: 'Careers', href: '/careers', description: 'Join our team' },
+  { name: 'News', href: '/news', description: 'Latest updates' },
+];
+
+const resourceItems = [
+  { name: 'Case Studies', href: '/case-studies', description: 'Success stories' },
+  { name: 'Technical Resources', href: '/resources', description: 'Downloads & guides' },
+  { name: 'Track Order', href: '/track-order', description: 'Track your shipment' },
+  { name: 'Contact', href: '/contact', description: 'Get in touch' },
+];
+
+type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  main_category: string;
+};
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
-  const [productsOpen, setProductsOpen] = useState(false);
-  const [industriesOpen, setIndustriesOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { totalItems } = useCart();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      if (!supabase) {
+        console.error('Supabase client not configured');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('id, name, slug, main_category')
+          .order('display_order', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching categories:', error);
+          return;
+        }
+        setCategories(data || []);
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchCategories();
+  }, []);
+
+  // Group categories by main_category
+  const groupedCategories = categories.reduce((acc, cat) => {
+    const group = cat.main_category || 'Other';
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(cat);
+    return acc;
+  }, {} as Record<string, Category[]>);
 
   const toggleMenu = () => setIsOpen(!isOpen);
+  
+  const toggleDropdown = (name: string) => {
+    if (openDropdown === name) {
+      setOpenDropdown(null);
+    } else {
+      setOpenDropdown(name);
+    }
+  };
+
+  const handleMouseEnter = (name: string) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setOpenDropdown(name);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setOpenDropdown(null);
+    }, 150);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b-2 border-primary shadow-lg">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+    <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+      {/* Top Bar */}
+      <div className="hidden lg:block bg-gray-900 text-white text-xs py-2">
+        <div className="max-w-7xl mx-auto px-8 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1">✓ IEC EN 62305 Certified</span>
+            <span className="flex items-center gap-1">★ 500+ Corporate Clients</span>
+            <span className="flex items-center gap-1">🚚 Fast Delivery Across Africa</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link href="/contact" className="hover:text-red-400 transition">Support</Link>
+            <Link href="/track-order" className="hover:text-red-400 transition">Track Order</Link>
+          </div>
+        </div>
+      </div>
+
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-          <Image src="/images/logo.png" alt="Entity Ville" width={180} height={60} className="h-12 w-auto" />
+          <Image 
+            src="/images/logo.png" 
+            alt="Entity Ville" 
+            width={180} 
+            height={60} 
+            className="h-12 w-auto" 
+            priority
+          />
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-1">
-          <Link href="/" className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 hover:bg-blue-50 rounded-lg">Home</Link>
-          
-          <Link href="/about" className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 hover:bg-blue-50 rounded-lg">About</Link>
-
-          {/* Products Dropdown */}
-          <div className="relative group">
-            <button className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 flex items-center gap-1 group-hover:bg-blue-50 rounded-lg">
-              Products
-              <ChevronDown size={16} className="group-hover:rotate-180 transition" />
-            </button>
-            <div className="absolute left-0 mt-0 w-80 bg-white border-2 border-primary/20 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-3 top-full z-50">
-              <div className="grid grid-cols-1 gap-1">
-                {products.map((product) => (
-                  <Link
-                    key={product.name}
-                    href={product.href}
-                    className="block px-3 py-2 text-foreground hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 hover:text-primary rounded-lg transition border-l-3 border-transparent hover:border-accent font-semibold text-sm"
-                  >
-                    {product.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Industries Dropdown - Widened for longer names */}
-          <div className="relative group">
-            <button className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 flex items-center gap-1 group-hover:bg-blue-50 rounded-lg">
-              Industries
-              <ChevronDown size={16} className="group-hover:rotate-180 transition" />
-            </button>
-            <div className="absolute left-0 mt-0 w-80 bg-white border-2 border-primary/20 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 p-3 top-full z-50">
-              <div className="space-y-1">
-                {industries.map((industry) => (
-                  <Link
-                    key={industry.name}
-                    href={industry.href}
-                    className="block px-3 py-2 text-foreground hover:bg-gradient-to-r hover:from-primary/10 hover:to-accent/10 hover:text-primary rounded-lg transition border-l-3 border-transparent hover:border-accent font-semibold text-sm"
-                  >
-                    {industry.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <Link href="/case-studies" className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 hover:bg-blue-50 rounded-lg">Case Studies</Link>
-          <Link href="/brand" className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 hover:bg-blue-50 rounded-lg">Brand</Link>
-          <Link href="/news" className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 hover:bg-blue-50 rounded-lg">News</Link>
-          <Link href="/careers" className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 hover:bg-blue-50 rounded-lg">Careers</Link>
-          <Link href="/contact" className="text-foreground font-bold hover:text-primary transition text-sm px-3 py-2 hover:bg-blue-50 rounded-lg">Contact</Link>
-          
-          {/* Get Quote Button */}
-          <Link href="/contact" className="px-5 py-2 bg-accent text-white rounded-lg hover:bg-red-600 transition font-bold text-sm shadow-lg hover:shadow-xl ml-2">
-            Get Quote
+        <div className="hidden lg:flex items-center gap-1" ref={dropdownRef}>
+          <Link href="/" className="text-gray-700 font-medium hover:text-red-600 transition px-3 py-2 text-sm">
+            Home
           </Link>
+
+          {/* Products Mega Menu - Wider & More Space */}
+          <div 
+            className="relative"
+            onMouseEnter={() => handleMouseEnter('products')}
+            onMouseLeave={handleMouseLeave}
+          >
+            <button
+              onClick={() => toggleDropdown('products')}
+              className={`flex items-center gap-1 text-gray-700 font-medium hover:text-red-600 transition px-3 py-2 text-sm ${openDropdown === 'products' ? 'text-red-600' : ''}`}
+            >
+              Products
+              <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === 'products' ? 'rotate-180' : ''}`} />
+            </button>
+            
+            <AnimatePresence>
+              {openDropdown === 'products' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute left-1/2 -translate-x-1/2 mt-2 w-[1100px] max-w-[95vw] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-y-auto max-h-[80vh]"
+                >
+                  <div className="grid grid-cols-6 gap-0">
+                    {/* Left Column - Category Groups - Now wider with 5 columns */}
+                    <div className="col-span-5 p-6">
+                      <div className="grid grid-cols-5 gap-6">
+                        {isLoading ? (
+                          <div className="col-span-5 text-center py-8 text-gray-500">Loading categories...</div>
+                        ) : (
+                          Object.entries(groupedCategories).map(([groupName, cats]) => (
+                            <div key={groupName}>
+                              <h3 className="font-bold text-gray-900 mb-3 text-xs uppercase tracking-wider border-l-2 border-red-500 pl-3">
+                                {groupName}
+                              </h3>
+                              <ul className="space-y-1.5">
+                                {cats.map((cat) => (
+                                  <li key={cat.id}>
+                                    <Link
+                                      href={`/products/category/${cat.slug}`}
+                                      className="text-gray-600 hover:text-red-600 text-sm block py-1 hover:translate-x-1 transition-all"
+                                      onClick={() => setOpenDropdown(null)}
+                                    >
+                                      {cat.name}
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        <Link href="/products" className="text-red-600 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
+                          View All Products <ArrowRight size={14} />
+                        </Link>
+                      </div>
+                    </div>
+                    
+                    {/* Right Column - Promo / Featured - Smaller */}
+                    <div className="col-span-1 bg-gradient-to-br from-red-50 to-blue-50 p-4 flex flex-col justify-between">
+                      <div className="text-center">
+                        <Zap size={28} className="mx-auto mb-2 text-red-500" />
+                        <h4 className="font-bold text-gray-900 mb-1 text-sm">Need Help?</h4>
+                        <p className="text-xs text-gray-600 mb-3">Our experts are here to help</p>
+                        <Link href="/contact" className="inline-block px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded-lg hover:bg-red-700 transition">
+                          Contact Sales
+                        </Link>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-gray-200/50">
+                        <Link href="/products" className="text-xs text-gray-500 hover:text-red-600 transition flex items-center justify-center gap-1">
+                          <Search size={12} /> Search all
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Industries Mega Menu */}
+          <div 
+            className="relative"
+            onMouseEnter={() => handleMouseEnter('industries')}
+            onMouseLeave={handleMouseLeave}
+          >
+            <button
+              onClick={() => toggleDropdown('industries')}
+              className={`flex items-center gap-1 text-gray-700 font-medium hover:text-red-600 transition px-3 py-2 text-sm ${openDropdown === 'industries' ? 'text-red-600' : ''}`}
+            >
+              Industries
+              <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === 'industries' ? 'rotate-180' : ''}`} />
+            </button>
+            
+            <AnimatePresence>
+              {openDropdown === 'industries' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute left-1/2 -translate-x-1/2 mt-2 w-[700px] max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50"
+                >
+                  <div className="grid grid-cols-5 gap-0">
+                    <div className="col-span-4 p-6">
+                      <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider border-l-2 border-red-500 pl-3">
+                        Industries We Serve
+                      </h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        {industries.map((industry) => (
+                          <Link
+                            key={industry.name}
+                            href={industry.href}
+                            className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition group"
+                            onClick={() => setOpenDropdown(null)}
+                          >
+                            <span className="text-2xl">{industry.icon}</span>
+                            <div>
+                              <div className="font-medium text-gray-800 group-hover:text-red-600">{industry.name}</div>
+                              <div className="text-xs text-gray-400">Solutions for {industry.name.toLowerCase()}</div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+                      <Shield size={32} className="mb-3 text-blue-500" />
+                      <h4 className="font-bold text-gray-900 mb-2">Custom Solutions</h4>
+                      <p className="text-xs text-gray-600 mb-4">Need a solution for your specific industry?</p>
+                      <Link href="/contact" className="text-red-600 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
+                        Talk to an Expert <ArrowRight size={14} />
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Company Mega Menu */}
+          <div 
+            className="relative"
+            onMouseEnter={() => handleMouseEnter('company')}
+            onMouseLeave={handleMouseLeave}
+          >
+            <button
+              onClick={() => toggleDropdown('company')}
+              className={`flex items-center gap-1 text-gray-700 font-medium hover:text-red-600 transition px-3 py-2 text-sm ${openDropdown === 'company' ? 'text-red-600' : ''}`}
+            >
+              Company
+              <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === 'company' ? 'rotate-180' : ''}`} />
+            </button>
+            
+            <AnimatePresence>
+              {openDropdown === 'company' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute left-1/2 -translate-x-1/2 mt-2 w-[500px] max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50"
+                >
+                  <div className="grid grid-cols-5 gap-0">
+                    <div className="col-span-3 p-6">
+                      <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider border-l-2 border-red-500 pl-3">
+                        Company
+                      </h3>
+                      <ul className="space-y-3">
+                        {companyItems.map((item) => (
+                          <li key={item.name}>
+                            <Link
+                              href={item.href}
+                              className="block p-2 rounded-lg hover:bg-gray-50 transition"
+                              onClick={() => setOpenDropdown(null)}
+                            >
+                              <div className="font-medium text-gray-800 hover:text-red-600">{item.name}</div>
+                              <div className="text-xs text-gray-400">{item.description}</div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="col-span-2 bg-gradient-to-br from-red-50 to-blue-50 p-6">
+                      <Activity size={32} className="mb-3 text-red-500" />
+                      <h4 className="font-bold text-gray-900 mb-2">12+ Years</h4>
+                      <p className="text-xs text-gray-600 mb-4">Of industry experience serving Africa</p>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="font-bold text-red-600">500+</span>
+                        <span className="text-gray-500">Corporate Clients</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Resources Mega Menu */}
+          <div 
+            className="relative"
+            onMouseEnter={() => handleMouseEnter('resources')}
+            onMouseLeave={handleMouseLeave}
+          >
+            <button
+              onClick={() => toggleDropdown('resources')}
+              className={`flex items-center gap-1 text-gray-700 font-medium hover:text-red-600 transition px-3 py-2 text-sm ${openDropdown === 'resources' ? 'text-red-600' : ''}`}
+            >
+              Resources
+              <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === 'resources' ? 'rotate-180' : ''}`} />
+            </button>
+            
+            <AnimatePresence>
+              {openDropdown === 'resources' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute left-1/2 -translate-x-1/2 mt-2 w-[500px] max-w-[90vw] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50"
+                >
+                  <div className="grid grid-cols-5 gap-0">
+                    <div className="col-span-3 p-6">
+                      <h3 className="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider border-l-2 border-red-500 pl-3">
+                        Resources
+                      </h3>
+                      <ul className="space-y-3">
+                        {resourceItems.map((item) => (
+                          <li key={item.name}>
+                            <Link
+                              href={item.href}
+                              className="block p-2 rounded-lg hover:bg-gray-50 transition"
+                              onClick={() => setOpenDropdown(null)}
+                            >
+                              <div className="font-medium text-gray-800 hover:text-red-600">{item.name}</div>
+                              <div className="text-xs text-gray-400">{item.description}</div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="col-span-2 bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+                      <FileText size={32} className="mb-3 text-blue-500" />
+                      <h4 className="font-bold text-gray-900 mb-2">Technical Resources</h4>
+                      <p className="text-xs text-gray-600 mb-4">Download catalogs, datasheets, and guides</p>
+                      <Link href="/resources" className="text-red-600 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
+                        View Resources <ArrowRight size={14} />
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Primary CTA Buttons */}
+          <div className="flex items-center gap-3 ml-4">
+            <Link 
+              href="/contact" 
+              className="px-5 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition font-semibold text-sm shadow-md hover:shadow-lg"
+            >
+              Get Quote
+            </Link>
+
+            <Link 
+              href="/cart" 
+              className="relative p-2 text-gray-700 hover:text-red-600 transition"
+            >
+              <ShoppingCart size={20} />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full bg-red-600 text-white">
+                  {totalItems}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
 
         {/* Mobile Menu Button */}
-        <button onClick={toggleMenu} className="lg:hidden text-foreground">
-          {isOpen ? <X size={28} /> : <Menu size={28} />}
+        <button onClick={toggleMenu} className="lg:hidden p-2 text-gray-700">
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </nav>
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="lg:hidden border-t-2 border-primary bg-white max-h-[80vh] overflow-y-auto">
-          <div className="px-5 py-5 space-y-2">
-            <Link href="/" className="block text-foreground font-bold text-base hover:text-primary transition py-2 border-b border-blue-50" onClick={toggleMenu}>Home</Link>
+        <div className="lg:hidden border-t border-gray-100 bg-white max-h-[calc(100vh-64px)] overflow-y-auto">
+          <div className="px-4 py-3 space-y-1">
+            <MobileNavLink href="/" onClick={toggleMenu}>Home</MobileNavLink>
             
-            <Link href="/about" className="block text-foreground font-bold text-base hover:text-primary transition py-2 border-b border-blue-50" onClick={toggleMenu}>About</Link>
-
-            {/* Products Mobile */}
-            <div>
-              <button onClick={() => setProductsOpen(!productsOpen)} className="w-full text-left text-foreground font-bold text-base flex items-center justify-between py-2 border-b border-blue-50">
-                Products
-                <ChevronDown size={18} className={`transition ${productsOpen ? 'rotate-180' : ''}`} />
-              </button>
-              {productsOpen && (
-                <div className="space-y-1 py-2 pl-3">
-                  {products.map((product) => (
-                    <Link key={product.name} href={product.href} className="block text-foreground hover:text-primary font-medium text-sm py-2" onClick={toggleMenu}>
-                      {product.name}
-                    </Link>
-                  ))}
-                </div>
+            <MobileDropdown title="Products" isOpen={openDropdown === 'mobile-products'} onToggle={() => toggleDropdown('mobile-products')}>
+              {isLoading ? (
+                <div className="text-sm text-gray-500 py-2">Loading categories...</div>
+              ) : (
+                Object.entries(groupedCategories).map(([groupName, cats]) => (
+                  <div key={groupName} className="mb-3">
+                    <div className="font-semibold text-gray-700 text-xs uppercase tracking-wider mb-2">{groupName}</div>
+                    {cats.map((cat) => (
+                      <MobileSubLink key={cat.id} href={`/products/category/${cat.slug}`} onClick={toggleMenu}>
+                        {cat.name}
+                      </MobileSubLink>
+                    ))}
+                  </div>
+                ))
               )}
-            </div>
+              <MobileSubLink href="/products" onClick={toggleMenu}>All Products</MobileSubLink>
+            </MobileDropdown>
 
-            {/* Industries Mobile */}
-            <div>
-              <button onClick={() => setIndustriesOpen(!industriesOpen)} className="w-full text-left text-foreground font-bold text-base flex items-center justify-between py-2 border-b border-blue-50">
-                Industries
-                <ChevronDown size={18} className={`transition ${industriesOpen ? 'rotate-180' : ''}`} />
-              </button>
-              {industriesOpen && (
-                <div className="space-y-1 py-2 pl-3">
-                  {industries.map((industry) => (
-                    <Link key={industry.name} href={industry.href} className="block text-foreground hover:text-primary font-medium text-sm py-2" onClick={toggleMenu}>
-                      {industry.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+            <MobileDropdown title="Industries" isOpen={openDropdown === 'mobile-industries'} onToggle={() => toggleDropdown('mobile-industries')}>
+              {industries.map((industry) => (
+                <MobileSubLink key={industry.name} href={industry.href} onClick={toggleMenu}>
+                  <span className="mr-2">{industry.icon}</span> {industry.name}
+                </MobileSubLink>
+              ))}
+            </MobileDropdown>
 
-            <Link href="/case-studies" className="block text-foreground font-bold text-base hover:text-primary transition py-2 border-b border-blue-50" onClick={toggleMenu}>Case Studies</Link>
-            <Link href="/news" className="block text-foreground font-bold text-base hover:text-primary transition py-2 border-b border-blue-50" onClick={toggleMenu}>News</Link>
-            <Link href="/careers" className="block text-foreground font-bold text-base hover:text-primary transition py-2 border-b border-blue-50" onClick={toggleMenu}>Careers</Link>
-            <Link href="/contact" className="block text-foreground font-bold text-base hover:text-primary transition py-2 border-b border-blue-50" onClick={toggleMenu}>Contact</Link>
-            
-            {/* Get Quote Button - Mobile */}
-            <Link href="/contact" className="block w-full text-center px-4 py-2.5 bg-accent text-white rounded-lg hover:bg-red-600 transition font-bold text-sm shadow-lg mt-4" onClick={toggleMenu}>
-              Get Quote
-            </Link>
+            <MobileDropdown title="Company" isOpen={openDropdown === 'mobile-company'} onToggle={() => toggleDropdown('mobile-company')}>
+              {companyItems.map((item) => (
+                <MobileSubLink key={item.name} href={item.href} onClick={toggleMenu}>
+                  {item.name}
+                </MobileSubLink>
+              ))}
+            </MobileDropdown>
+
+            <MobileDropdown title="Resources" isOpen={openDropdown === 'mobile-resources'} onToggle={() => toggleDropdown('mobile-resources')}>
+              {resourceItems.map((item) => (
+                <MobileSubLink key={item.name} href={item.href} onClick={toggleMenu}>
+                  {item.name}
+                </MobileSubLink>
+              ))}
+            </MobileDropdown>
+
+            <div className="pt-4 space-y-2">
+              <Link href="/contact" className="block w-full text-center px-4 py-3 bg-red-600 text-white rounded-xl font-semibold text-sm" onClick={toggleMenu}>
+                Get Quote
+              </Link>
+              <Link href="/cart" className="flex items-center justify-center gap-2 w-full text-center px-4 py-3 border border-gray-200 rounded-xl font-semibold text-sm" onClick={toggleMenu}>
+                <ShoppingCart size={16} /> Cart {totalItems > 0 && `(${totalItems})`}
+              </Link>
+            </div>
           </div>
         </div>
       )}
     </header>
+  );
+}
+
+// Mobile helper components
+function MobileNavLink({ href, onClick, children }: { href: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="block text-gray-700 font-medium py-3 border-b border-gray-100" onClick={onClick}>
+      {children}
+    </Link>
+  );
+}
+
+function MobileDropdown({ title, isOpen, onToggle, children }: { title: string; isOpen: boolean; onToggle: () => void; children: React.ReactNode }) {
+  return (
+    <div className="border-b border-gray-100">
+      <button onClick={onToggle} className="w-full text-left text-gray-700 font-medium flex items-center justify-between py-3">
+        {title}
+        <ChevronDown size={18} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {isOpen && <div className="pb-3 pl-4 space-y-2">{children}</div>}
+    </div>
+  );
+}
+
+function MobileSubLink({ href, onClick, children }: { href: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="block text-gray-500 text-sm py-2 hover:text-red-600" onClick={onClick}>
+      {children}
+    </Link>
   );
 }
