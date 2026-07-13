@@ -28,3 +28,9 @@ export default async function Home() {
   );
 }
 
+// export const metadata: Metadata = {
+//   title: 'Entity Ville Ltd — Premium Electrical Components Supplier in Nigeria',
+//   description:
+//     'Entity Ville Ltd supplies premium electrical components across Nigeria and Africa — cable trays, circuit breakers, earthing systems, busbars, lightning protection, conduits, and wiring devices from trusted brands.',
+//   alternates: { canonical: 'https://entityville.com/' },
+// }

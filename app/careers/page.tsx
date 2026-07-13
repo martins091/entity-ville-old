@@ -1,6 +1,4 @@
- 'use client';
-
-import type { Metadata } from 'next'
+'use client';
 
 import { useState } from 'react';
 import Header from '@/components/header';
@@ -332,4 +330,3 @@ export default function CareersPage() {
     </main>
   );
 }
-
