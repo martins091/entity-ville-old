@@ -1,6 +1,4 @@
-"use client";
-
-import { useEffect, useState } from 'react';
+import type { Metadata } from 'next'
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import Link from 'next/link';
@@ -216,4 +214,10 @@ export default function NewsPage() {
       <Footer />
     </main>
   );
+}
+
+export const metadata: Metadata = {
+  title: 'News & Insights — Entity Ville Ltd',
+  description: 'Expert guides and updates on cable management, circuit protection, earthing systems, busbars, lightning arrestors, wiring devices, and best practices for electrical infrastructure.',
+  alternates: { canonical: 'https://entityville.com/news' },
 }

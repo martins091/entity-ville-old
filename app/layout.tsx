@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     description: 'Leading supplier of premium electrical components in Nigeria. Quality products from ABB, Schneider, Siemens, Chint, and Indelec.',
     images: [
       {
-        url: '/og-image.jpg',
+        url: '/logo.png',
         width: 1200,
         height: 630,
         alt: 'Entity Ville - Electrical Components Supplier',
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Entity Ville Ltd - Premium Electrical Components Supplier',
     description: 'Quality electrical components: cable trays, circuit breakers, earthing systems, busbars, and more. Trusted brands across Nigeria.',
-    images: ['/twitter-image.jpg'],
+    images: ['/logo.png'],
     creator: '@entityville',
   },
   alternates: {
@@ -114,6 +114,20 @@ export default function RootLayout({
         <meta name="theme-color" content="#1E3A5F" />
         <meta name="format-detection" content="telephone=no" />
         <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "Entity Ville Ltd",
+            "url": "https://entityville.com",
+            "logo": "https://entityville.com/logo.png",
+            "sameAs": [
+              // Add social profile URLs here if available
+            ]
+          }) }}
+        />
       </head>
       <body className="font-sans antialiased">
         <CartProvider>

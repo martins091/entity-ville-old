@@ -1,4 +1,6 @@
-'use client';
+ 'use client';
+
+import type { Metadata } from 'next'
 
 import { useState } from 'react';
 import Header from '@/components/header';
@@ -170,4 +172,10 @@ export default function ContactPage() {
       <Footer />
     </main>
   );
+}
+
+export const metadata: Metadata = {
+  title: 'Contact Entity Ville Ltd — Request Quotes & Support',
+  description: 'Contact Entity Ville Ltd for quotes, technical support, and enquiries about premium electrical components across Nigeria and Africa. Phone, email, and office details provided.',
+  alternates: { canonical: 'https://entityville.com/contact' },
 }
