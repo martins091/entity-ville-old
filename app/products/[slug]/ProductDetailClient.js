@@ -1,436 +1,643 @@
-'use client';
+"use client";
 
 import Header from '@/components/header';
 import Footer from '@/components/footer';
-import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2, Package, Zap, ShieldCheck, Cable, Lightbulb } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  ArrowRight, 
+  CheckCircle2, 
+  ShoppingCart, 
+  Zap, 
+  Shield, 
+  Truck, 
+  Star, 
+  Clock,
+  Award,
+  FileText,
+  Phone,
+  Mail,
+  MapPin,
+  ChevronLeft,
+  Minus,
+  Plus,
+  Heart,
+  Share2,
+  ExternalLink
+} from 'lucide-react';
+import { useCart } from '@/hooks/use-cart';
+import { useEffect, useState } from 'react';
+import { productsMap } from '@/lib/products';
+import { fetchStorefrontProductBySlug } from '@/lib/supabase/catalog';
+import ProductImage from '@/components/product-image';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
-const productDetails = {
-  'cable-trays': {
-    title: 'Cable Trays & Ladders',
-    subtitle: 'Premium cable management systems for industrial and commercial installations',
-    image: '/images/cable-tray.png',
-    description: 'Our high-quality cable trays and ladders are designed for organized and safe cable management in industrial plants, commercial buildings, and power stations. Available in pre-galvanized and hot-dip galvanized (HDG) finishes, these trays provide excellent corrosion resistance for both indoor and harsh outdoor environments. Complete range of accessories including elbows, tees, reducers, splice plates, covers, and brackets ensures flexible and secure installations.',
-    category: 'Cable Management',
-    features: [
-      'Pre-Galvanized finish for indoor applications',
-      'Hot-Dip Galvanized (HDG) for outdoor & harsh environments',
-      'Complete accessories: elbows, tees, reducers, splice plates, covers, brackets',
-      'Heavy-duty load capacity for industrial use',
-      'Easy installation with secure connections',
-    ],
-    specs: [
-      'Material: Pre-Galvanized Steel / Hot-Dip Galvanized (HDG)',
-      'Finish Options: Galvanized, HDG, Stainless Steel',
-      'Corrosion resistant for long service life',
-      'Various widths and heights available',
-      'Custom sizes available on request',
-    ],
-    applications: [
-      'Industrial plants & factories',
-      'Commercial buildings & offices',
-      'Power stations & substations',
-      'Data centers & telecom facilities',
-      'Oil & gas installations',
-    ],
-  },
-
-  'cable-lugs': {
-    title: 'Cable Lugs',
-    subtitle: 'High-conductivity cable lugs for secure electrical terminations',
-    image: '/images/cablelugs.jpeg',
-    description: 'Our premium cable lugs are essential components for securely terminating and connecting electrical cables to equipment, terminals, and busbars. Made from high-quality copper and aluminum, these lugs provide excellent electrical conductivity, mechanical strength, and safe power transfer. Designed for industrial, commercial, and residential installations, they ensure reliable connections that stand the test of time.',
-    category: 'Electrical Accessories',
-    features: [
-      'Copper and aluminum options available',
-      'High electrical conductivity for efficient power transfer',
-      'Corrosion-resistant for long-lasting performance',
-      'Wide range of sizes for different cable gauges',
-      'Easy crimping and installation',
-    ],
-    specs: [
-      'Material: High-grade Copper / Aluminum',
-      'Corrosion-resistant surface treatment',
-      'Available in various stud hole sizes',
-      'Compatible with standard crimping tools',
-      'Meets international quality standards',
-    ],
-    applications: [
-      'Panel and switchgear connections',
-      'Power distribution systems',
-      'Industrial machinery wiring',
-      'Transformer terminations',
-      'Residential electrical installations',
-    ],
-  },
-
-  'earth-rods': {
-    title: 'Earth Rods & Earthing Materials',
-    subtitle: 'Complete grounding solutions for electrical safety and protection',
-    image: '/images/earthing-systems.jpg',
-    description: 'Ensure safe and reliable grounding with our high-quality earthing solutions. Our range includes galvanized earth rods, pure copper rods, and complete earthing systems designed for industrial, commercial, and residential installations. These rods efficiently dissipate fault currents, protecting equipment and personnel from electrical hazards. Available with compatible accessories including earth clamps, inspection pits, and couplers for rod extension.',
-    category: 'Earthing & Protection',
-    features: [
-      'Galvanized earth rods with thick zinc coating',
-      'Pure copper rods for superior conductivity',
-      'Copper-bonded rods for corrosion resistance',
-      'Complete accessories: clamps, couplers, inspection pits',
-      'Earthing mats for substations and power plants',
-    ],
-    specs: [
-      'Diameter: 16mm, 20mm, 25mm (Galvanized)',
-      'Diameter: 8mm, 10mm, 12mm, 16mm, 20mm (Copper)',
-      'Length: 1.2m, 1.8m, 3m (Standard)',
-      'Custom lengths available on request',
-      'High mechanical strength for driving into soil',
-    ],
-    applications: [
-      'Industrial facilities & power plants',
-      'Telecommunication towers',
-      'Residential buildings',
-      'Substations & transformer stations',
-      'Solar farms & renewable energy sites',
-    ],
-  },
-
-  'circuit-breakers': {
-    title: 'Circuit Breakers',
-    subtitle: 'Reliable protection devices from trusted global brands',
-    image: '/images/breakers.jpg',
-    description: 'Protect your electrical systems with high-quality circuit breakers from leading brands including ABB, Schneider Electric, Siemens, and Chint. Designed for switchgear, distribution boards, and control panels, these breakers provide reliable overcurrent, short-circuit, and fault protection. Available in miniature circuit breakers (MCB), molded case circuit breakers (MCCB), and residual current breakers (RCB/ELCB) to suit residential, commercial, and industrial applications.',
-    category: 'Protection Devices',
-    features: [
-      'Trusted brands: ABB, Schneider, Siemens, Chint',
-      'MCB, MCCB, and RCB/ELCB types available',
-      'Fast and accurate fault protection',
-      'Easy installation in standard panels',
-      'IEC and international standards compliant',
-    ],
-    specs: [
-      'Current Ratings: 6A – 630A (depending on type)',
-      'Poles: 1P, 2P, 3P, 4P options',
-      'Voltage: AC 230V – 415V, DC options available',
-      'High breaking capacity for safety',
-      'Standards: IEC, BS, or local regulatory standards',
-    ],
-    applications: [
-      'Distribution panels and switchgear',
-      'Industrial control panels',
-      'Commercial building electrical systems',
-      'Residential consumer units',
-      'Motor protection circuits',
-    ],
-  },
-
-  'conduits': {
-    title: 'Conduit Pipes & Fittings',
-    subtitle: 'Complete wiring protection systems for safe cable routing',
-    image: '/images/conduit-pipe.jpg',
-    description: 'Our comprehensive range of conduit pipes and fittings provides complete protection for electrical wiring installations. Available in pre-galvanized steel for indoor applications, hot-dip galvanized (HDG) for harsh outdoor environments, and flexible conduit options for dynamic installations. PVC-coated flexible conduits offer additional protection in corrosive environments. All products are manufactured to high standards for durability, fire resistance, and easy installation.',
-    category: 'Wiring Systems',
-    features: [
-      'Pre-Galvanized for indoor and light industrial use',
-      'Hot-Dip Galvanized (HDG) for outdoor and harsh environments',
-      'Flexible conduits for dynamic or tight installations',
-      'PVC-coated options for corrosion resistance',
-      'Complete range of fittings and accessories',
-    ],
-    specs: [
-      'Materials: Pre-Galvanized Steel, HDG, PVC-coated, Flexible',
-      'Various diameters available for different cable sizes',
-      'Fire-resistant materials for safety',
-      'Smooth internal finish for easy cable pulling',
-      'Compatible with standard conduit fittings',
-    ],
-    applications: [
-      'Residential and commercial wiring',
-      'Industrial plant installations',
-      'Outdoor electrical systems',
-      'Telecommunications cabling',
-      'Underground cable protection',
-    ],
-  },
-
-  'busbars': {
-    title: 'Tinned Copper Busbars',
-    subtitle: 'High-conductivity power distribution bars for electrical systems',
-    image: '/images/plated-copper-busbar.jpg',
-    description: 'Our tinned copper busbars are designed for efficient electrical power distribution in industrial and commercial applications. Made from high-quality copper with a protective tin coating, these busbars offer excellent conductivity while preventing oxidation and corrosion. The tin coating makes them ideal for humid, coastal, or corrosive environments. Easy to connect to switchgear, distribution panels, transformers, and control equipment, these busbars provide maintenance-free performance with long-lasting durability.',
-    category: 'Power Distribution',
-    features: [
-      'High-quality copper with protective tin coating',
-      'Prevents oxidation and corrosion',
-      'Low-resistance power transfer',
-      'Maintenance-free operation',
-      'Custom lengths available on request',
-    ],
-    specs: [
-      'Width: 20mm, 30mm, 50mm, 100mm',
-      'Thickness: 3mm, 5mm, 6mm, 10mm',
-      'Length: Standard 1m, 2m, 3m',
-      'Custom sizes available on request',
-      'Compatible with busbar end caps and insulation covers',
-    ],
-    applications: [
-      'Switchgear and distribution panels',
-      'Transformer connections',
-      'Industrial control panels',
-      'Power factor correction systems',
-      'Generator and UPS systems',
-    ],
-  },
-
-  'lightning-arrestors': {
-    title: 'Lightning Arrestors',
-    subtitle: 'Superior lightning and surge protection for electrical systems',
-    image: '/images/surge-arresters.png',
-    description: 'Protect your valuable electrical equipment and structures with our Indelec thunder arrestors, designed to provide superior protection against lightning strikes and power surges. These high-quality arrestors efficiently divert lightning currents and transient surges safely to the ground, preventing costly damage to electrical systems. Manufactured from corrosion-resistant materials with IEC compliance, they are ideal for industrial, commercial, and residential installations in high-risk lightning zones.',
-    category: 'Surge Protection',
-    features: [
-      'Indelec brand - trusted lightning protection',
-      'IEC and international standards compliant',
-      'Corrosion-resistant materials for durability',
-      'Efficient surge current diversion to ground',
-      'Easy installation on rooftops and towers',
-    ],
-    specs: [
-      'Compatible with IEC lightning protection standards',
-      'Custom sizes available on request',
-      'Works with earthing systems for complete protection',
-      'Suitable for all building types',
-      'Mounting brackets and bases included',
-    ],
-    applications: [
-      'Industrial plants and factories',
-      'Commercial buildings and offices',
-      'Telecommunication towers',
-      'Residential buildings',
-      'Solar farms and renewable energy sites',
-    ],
-  },
-
-  'wiring-devices': {
-    title: 'Wiring Devices',
-    subtitle: 'Premium switches, sockets, and lighting fixtures for all installations',
-    image: '/images/wiring-device.png',
-    description: 'Upgrade your electrical installations with our premium wiring devices, including sockets, switches, lighting fixtures, and related accessories. Designed for residential, commercial, and industrial applications, these devices provide reliable performance, safety, and convenience. Our range includes modular switches and sockets for modern interiors, weatherproof options for outdoor installations, and industrial-grade devices for heavy-duty applications. Complete your installation with our LED lighting solutions including panels, surface lights, floodlights, and tube lights.',
-    category: 'Wiring Accessories',
-    features: [
-      'Single, double, and three-way switches',
-      'Universal and industrial socket outlets',
-      'LED lighting: panels, floodlights, tube lights',
-      'Weatherproof and industrial-grade options',
-      'Complete accessories: faceplates, covers, mounting brackets',
-    ],
-    specs: [
-      'Modular and standard switch designs',
-      'Weatherproof rating for outdoor use',
-      'Industrial-grade for heavy-duty applications',
-      'LED lighting: various wattages and color temperatures',
-      'Compatible with standard mounting boxes',
-    ],
-    applications: [
-      'Residential homes and apartments',
-      'Commercial offices and retail spaces',
-      'Industrial facilities and workshops',
-      'Hotels and hospitality venues',
-      'Outdoor lighting installations',
-    ],
-  },
-
-  'inspection-chambers': {
-    title: 'Inspection Chambers',
-    subtitle: 'Durable access points for underground cable and drainage systems',
-    image: '/images/inspection.png',
-    description: 'Our high-quality inspection chambers are essential components for underground cable systems and drainage networks, providing easy access for maintenance, inspection, and cleaning. Manufactured from durable galvanized steel, HDPE, or concrete, these chambers ensure the smooth operation of cable trays, conduits, and earthing systems while protecting the network from environmental damage. Designed to resist soil pressure, corrosion, and environmental stress, they are suitable for both indoor and outdoor installations in industrial, commercial, and residential projects.',
-    category: 'Underground Infrastructure',
-    features: [
-      'Galvanized steel, HDPE, or concrete options',
-      'Resists soil pressure and environmental stress',
-      'Easy access for maintenance and inspection',
-      'Corrosion-resistant for long service life',
-      'Complete with covers and accessories',
-    ],
-    specs: [
-      'Diameter: 300mm, 450mm, 600mm',
-      'Depth: 600mm, 900mm, 1200mm',
-      'Custom sizes available on request',
-      'Covers: Galvanized or HDPE',
-      'Accessories: Ladder rungs, sealing gaskets',
-    ],
-    applications: [
-      'Underground cable systems',
-      'Drainage and sewage networks',
-      'Telecommunications infrastructure',
-      'Street lighting installations',
-      'Industrial facility grounds',
-    ],
-  },
-
-  'solar-materials': {
-    title: 'Solar Materials & Components',
-    subtitle: 'Complete solar power solutions for residential, commercial, and industrial applications',
-    image: '/images/sola.jpg',
-    description: 'Our solar materials and components provide complete solutions for solar power systems, including lithium batteries, inverters, solar panels, and essential accessories. Designed for efficiency, durability, and long-term performance, our products support reliable energy generation, storage, and distribution. Suitable for homes, businesses, and large-scale solar installations, we supply high-quality components that meet international standards and ensure optimal system performance.',
-    category: 'Renewable Energy Solutions',
-    features: [
-      'High-efficiency solar panels with long lifespan',
-      'Lithium batteries for reliable energy storage',
-      'Hybrid and pure sine wave inverters',
-      'Complete accessories: MC4 connectors, cables, mounting kits',
-      'Weather-resistant and durable components',
-      'Energy-saving and eco-friendly solutions',
-    ],
-    specs: [
-      'Solar Panels: Mono/Polycrystalline (300W – 700W)',
-      'Batteries: Lithium-ion, Deep Cycle (12V, 24V, 48V)',
-      'Inverters: 1kVA – 10kVA+ (Hybrid & Off-grid)',
-      'Charge Controllers: MPPT & PWM types',
-      'Mounting Structures: Roof & ground-mounted systems',
-    ],
-    applications: [
-      'Residential solar power systems',
-      'Commercial and office buildings',
-      'Industrial solar installations',
-      'Telecommunication sites',
-      'Rural electrification projects',
-      'Backup power and energy storage systems',
-    ],
-  },
+const colors = {
+  primary: "#C10008",
+  secondary: "#027FFF",
+  gradient: "linear-gradient(135deg, #C10008 0%, #027FFF 100%)",
+  gradientReverse: "linear-gradient(135deg, #027FFF 0%, #C10008 100%)",
 };
 
 export default function ProductDetailClient({ slug }) {
-  const product = productDetails[slug];
+  const [product, setProduct] = useState(productsMap[slug] || null);
+  const [loading, setLoading] = useState(true);
+  const { addItem } = useCart();
+  const [qty, setQty] = useState(1);
+  const [isCartModalOpen, setCartModalOpen] = useState(false);
+  const [activeImage, setActiveImage] = useState(product?.images?.[0] || product?.image);
+  const [isWishlist, setIsWishlist] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState(product?.variants?.[0] || null);
+  const variants = product?.variants || [];
+  const selectedPrice = Number(selectedVariant?.price ?? product?.price ?? 0);
+  const hasPrice = selectedPrice > 0;
+  const selectedStock = Number(selectedVariant?.stock_quantity ?? 0);
 
-  if (!product) {
+  useEffect(() => {
+    setLoading(true);
+    fetchStorefrontProductBySlug(slug).then((item) => {
+      if (!item) {
+        setLoading(false);
+        setProduct(null);
+        return;
+      }
+      setProduct(item);
+      setActiveImage(item.images?.[0] || item.image);
+      setSelectedVariant(item.variants?.[0] || null);
+      setLoading(false);
+    });
+  }, [slug]);
+
+  const incrementQty = () => setQty(prev => prev + 1);
+  const decrementQty = () => setQty(prev => Math.max(1, prev - 1));
+
+  // Loading State
+  if (loading) {
     return (
-      <main className="bg-white text-foreground">
+      <main className="bg-white min-h-screen">
         <Header />
         <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-4xl font-black text-foreground mb-4">Product Not Found</h1>
-            <p className="text-muted-foreground mb-8">Sorry, we couldn't find this product.</p>
-            <Link href="/products" className="px-6 py-3 bg-primary text-white rounded-lg font-bold hover:bg-blue-700">
-              Back to Products
-            </Link>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <div className="inline-flex p-4 rounded-full bg-gradient-to-r from-red-50 to-blue-50 mb-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#C10008] border-t-transparent"></div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Loading product...</h2>
+            <p className="text-gray-500 mt-2">Please wait while we fetch the product details</p>
+          </motion.div>
         </div>
         <Footer />
       </main>
     );
   }
 
+  // Not Found State - Only shown after loading is complete
+  if (!product) {
+    return (
+      <main className="bg-white min-h-screen">
+        <Header />
+        <div className="min-h-screen flex items-center justify-center">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <div className="inline-flex p-4 rounded-full bg-gradient-to-r from-red-50 to-blue-50 mb-4">
+              <Zap size={48} style={{ color: colors.primary }} />
+            </div>
+            <h1 className="text-4xl font-black text-gray-900 mb-4">Product Not Found</h1>
+            <p className="text-gray-500 mb-8">Sorry, we couldn't find this product.</p>
+            <Link 
+              href="/products" 
+              className="inline-flex items-center gap-2 px-8 py-3 rounded-xl text-white font-semibold transition-all duration-300 hover:scale-105"
+              style={{ background: colors.gradient }}
+            >
+              Back to Products
+              <ArrowRight size={18} />
+            </Link>
+          </motion.div>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
+
+  const handleAdd = () => {
+    const cartId = selectedVariant
+      ? `${product.slug}:${selectedVariant.id || selectedVariant.part_number || selectedVariant.size}`
+      : product.slug;
+
+    addItem(
+      {
+        id: cartId,
+        name: selectedVariant?.size ? `${product.name} - ${selectedVariant.size}` : product.name,
+        price: selectedPrice,
+        image: activeImage,
+        slug: product.slug,
+        size: selectedVariant?.size,
+        weight: selectedVariant?.weight,
+        partNumber: selectedVariant?.part_number,
+        requiresQuote: !hasPrice,
+      },
+      qty
+    );
+    setCartModalOpen(true);
+  };
+
   return (
-    <main className="bg-white text-foreground">
+    <main className="bg-white min-h-screen">
       <Header />
 
-      {/* HERO - Reduced height */}
-      <section className="relative h-64 flex items-center">
-        <Image 
-          src={product.image} 
-          alt={product.title} 
-          fill 
-          className="object-cover opacity-30" 
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/60" />
-
-        <div className="relative z-10 max-w-7xl mx-auto px-6 text-white">
-          <Link href="/" className="text-white/80 hover:text-white text-sm mb-4 inline-block">
-            ← Back to Products
-          </Link>
-          <h1 className="text-4xl md:text-5xl font-black">{product.title}</h1>
-          <p className="text-lg mt-2 text-white/90">{product.subtitle}</p>
-        </div>
-      </section>
-
-      {/* OVERVIEW */}
-      <section className="py-16 max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12">
-        <div className="relative h-96 rounded-xl overflow-hidden shadow-2xl">
-          <Image 
-            src={product.image} 
-            alt={product.title} 
-            fill 
-            className="object-cover" 
+      {/* Hero Section - Premium Dual Color */}
+      <section className="relative overflow-hidden py-16 lg:py-24">
+        {/* Background Effects */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div 
+            className="absolute -top-40 -right-20 w-96 h-96 rounded-full opacity-20 blur-3xl animate-pulse"
+            style={{ backgroundColor: colors.primary }}
           />
+          <div 
+            className="absolute top-40 -left-20 w-96 h-96 rounded-full opacity-20 blur-3xl animate-pulse"
+            style={{ backgroundColor: colors.secondary }}
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(193,0,8,0.08)_0%,_rgba(2,127,255,0.05)_50%,_transparent_100%)]" />
         </div>
 
-        <div>
-          <h2 className="text-3xl font-black text-foreground mb-4">Product Overview</h2>
-          <p className="text-muted-foreground mb-6 leading-relaxed">{product.description}</p>
-
-          <div className="mb-6">
-            <p className="text-sm text-muted-foreground mb-1">Category:</p>
-            <span className="inline-block px-3 py-1 bg-accent/10 text-accent rounded-full text-sm font-semibold">
-              {product.category}
-            </span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm mb-6">
+            <Link href="/" className="text-gray-500 hover:text-gray-700 transition">Home</Link>
+            <ChevronLeft size={14} className="text-gray-400 rotate-180" />
+            <Link href="/products" className="text-gray-500 hover:text-gray-700 transition">Products</Link>
+            <ChevronLeft size={14} className="text-gray-400 rotate-180" />
+            <span className="font-semibold" style={{ color: colors.primary }}>{product.name}</span>
           </div>
 
-          <Link href="/contact" className="inline-flex bg-accent text-white px-6 py-3 rounded-lg hover:bg-red-600 transition font-bold items-center gap-2">
-            Request Quote <ArrowRight size={18} />
-          </Link>
+          <div className="grid lg:grid-cols-2 gap-12 items-start">
+            {/* Image Gallery - Premium */}
+            <div>
+              {/* Main Image */}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="relative h-96 lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl mb-4 group"
+              >
+                <ProductImage
+                  src={activeImage}
+                  alt={product.name}
+                  fill
+                  className="object-cover transition duration-700 group-hover:scale-110"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500" />
+                
+                {/* Badges */}
+                <div className="absolute top-4 left-4 flex gap-2">
+                  <span 
+                    className="px-3 py-1.5 text-xs font-bold rounded-lg shadow-lg text-white"
+                    style={{ background: colors.gradient }}
+                  >
+                    In Stock
+                  </span>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <button 
+                    onClick={() => setIsWishlist(!isWishlist)}
+                    className="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:scale-110 transition shadow-lg"
+                  >
+                    <Heart size={18} className={isWishlist ? "fill-red-500 text-red-500" : "text-gray-600"} />
+                  </button>
+                  <button className="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:scale-110 transition shadow-lg">
+                    <Share2 size={18} className="text-gray-600" />
+                  </button>
+                </div>
+              </motion.div>
+
+              {/* Thumbnails */}
+              {product.images && product.images.length > 0 && (
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {product.images.map((img, i) => (
+                    <motion.div
+                      key={i}
+                      whileHover={{ scale: 1.05 }}
+                      onClick={() => setActiveImage(img)}
+                      className={`relative w-20 h-20 rounded-xl overflow-hidden cursor-pointer border-2 transition-all duration-200 ${
+                        activeImage === img 
+                          ? "shadow-lg" 
+                          : "border-transparent opacity-70 hover:opacity-100"
+                      }`}
+                      style={activeImage === img ? { borderColor: colors.primary } : {}}
+                    >
+                      <ProductImage src={img} alt={`${product.name} view ${i + 1}`} fill className="object-cover" />
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Product Info */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              {/* Category Badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-red-50 to-blue-50 mb-4">
+                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: colors.secondary }}>
+                  {product.category}
+                </span>
+              </div>
+
+              <h1 className="text-3xl lg:text-4xl font-black text-gray-900 mb-4">
+                {product.name}
+              </h1>
+
+              {/* Rating */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={16} className="fill-yellow-400 text-yellow-400" />
+                  ))}
+                  <span className="text-sm font-semibold text-gray-700 ml-2">4.9</span>
+                </div>
+                <span className="text-sm text-gray-400">| 156 reviews</span>
+                <div className="flex items-center gap-1">
+                  <Shield size={14} style={{ color: colors.secondary }} />
+                  <span className="text-xs text-gray-500">2 Year Warranty</span>
+                </div>
+              </div>
+
+              {/* Price */}
+              <div className="mb-6">
+                <span className="text-xs text-gray-500 uppercase tracking-wider">Price</span>
+                <div className="flex items-baseline gap-3">
+                  <span className="text-4xl font-black" style={{ color: colors.primary }}>
+                    {hasPrice ? `₦${selectedPrice.toLocaleString()}` : 'Price on Request'}
+                  </span>
+                  {hasPrice && (
+                    <>
+                      <span className="text-sm text-gray-400 line-through">
+                        ₦{(selectedPrice * 1.2).toLocaleString()}
+                      </span>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                        Save 20%
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Description */}
+              <p className="text-gray-600 leading-relaxed mb-6 border-l-3 pl-4" style={{ borderLeftColor: colors.primary }}>
+                {product.description}
+              </p>
+
+              {variants.length > 0 && (
+                <div className="mb-6">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <label className="text-sm font-bold text-gray-800">Choose Size / Variant</label>
+                    <span className="text-xs text-gray-500">{variants.length} option{variants.length === 1 ? '' : 's'} available</span>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {variants.slice(0, 12).map((variant) => {
+                      const isSelected = selectedVariant?.id === variant.id;
+                      const variantPrice = Number(variant.price || 0);
+
+                      return (
+                        <button
+                          key={variant.id || variant.part_number}
+                          type="button"
+                          onClick={() => setSelectedVariant(variant)}
+                          className={`rounded-xl border p-3 text-left transition ${
+                            isSelected
+                              ? 'border-[#C10008] bg-red-50 shadow-sm'
+                              : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="block text-sm font-bold text-gray-900">{variant.size || variant.part_number}</span>
+                          <span className="mt-1 block text-xs text-gray-500">
+                            {variant.part_number}{variant.weight ? ` / ${variant.weight}` : ''}
+                          </span>
+                          <span className="mt-2 block text-sm font-black" style={{ color: variantPrice > 0 ? colors.primary : '#4b5563' }}>
+                            {variantPrice > 0 ? `₦${variantPrice.toLocaleString()}` : 'Price on Request'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {selectedVariant && (
+                <div className="mb-6 rounded-xl border border-gray-100 bg-gray-50 p-4">
+                  <h3 className="mb-3 text-sm font-bold text-gray-800">Selected Product Details</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-xs uppercase tracking-wide text-gray-400">Part Number</span>
+                      <p className="font-mono font-semibold text-gray-900">{selectedVariant.part_number || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs uppercase tracking-wide text-gray-400">Size</span>
+                      <p className="font-semibold text-gray-900">{selectedVariant.size || 'Standard'}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs uppercase tracking-wide text-gray-400">Weight</span>
+                      <p className="font-semibold text-gray-900">{selectedVariant.weight || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs uppercase tracking-wide text-gray-400">Stock</span>
+                      <p className="font-semibold text-gray-900">{selectedStock > 0 ? `${selectedStock} available` : 'Confirm availability'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Features Highlights */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50">
+                  <Zap size={16} style={{ color: colors.primary }} />
+                  <span className="text-xs font-medium text-gray-700">High Performance</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50">
+                  <Shield size={16} style={{ color: colors.secondary }} />
+                  <span className="text-xs font-medium text-gray-700">Certified Quality</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50">
+                  <Truck size={16} style={{ color: colors.primary }} />
+                  <span className="text-xs font-medium text-gray-700">Fast Delivery</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50">
+                  <Clock size={16} style={{ color: colors.secondary }} />
+                  <span className="text-xs font-medium text-gray-700">24/7 Support</span>
+                </div>
+              </div>
+
+              {/* Quantity and Actions */}
+              <div className="space-y-4 mb-6">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-semibold text-gray-700">Quantity:</span>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={decrementQty}
+                      className="p-2 rounded-lg border border-gray-200 hover:border-gray-300 transition"
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      value={qty}
+                      onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
+                      className="w-16 text-center px-2 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-[#C10008]"
+                    />
+                    <button 
+                      onClick={incrementQty}
+                      className="p-2 rounded-lg border border-gray-200 hover:border-gray-300 transition"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={handleAdd}
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-bold transition-all duration-300 hover:scale-105 shadow-lg"
+                    style={{ background: colors.gradient }}
+                  >
+                    <ShoppingCart size={18} />
+                    {hasPrice ? `Add to Cart - ₦${(selectedPrice * qty).toLocaleString()}` : 'Add to Cart for Quote'}
+                  </button>
+                  <Link
+                    href="/contact"
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:scale-105 border-2"
+                    style={{ borderColor: colors.secondary, color: colors.secondary }}
+                  >
+                    <FileText size={18} />
+                    Talk to Sales
+                  </Link>
+                </div>
+              </div>
+
+              {/* Stock & Delivery Info */}
+              <div className="p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-sm font-semibold text-green-600">
+                      {selectedStock > 0 ? 'In Stock' : 'Available to Order'}
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-400">Free shipping over ₦500k</span>
+                </div>
+                <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: '75%', background: colors.gradient }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {selectedStock > 0 ? `${selectedStock} units currently listed` : 'Availability will be confirmed after checkout.'}
+                </p>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* KEY FEATURES */}
-      <section className="bg-blue-50 py-16">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl font-black text-foreground mb-8">Key <span className="text-accent">Features</span></h2>
+      {/* Features Section */}
+      {product.features && product.features.length > 0 && (
+        <section className="py-16 bg-gradient-to-r from-gray-50 to-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-2 mb-3">
+                <Award size={20} style={{ color: colors.primary }} />
+                <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: colors.secondary }}>
+                  Why Choose This Product
+                </span>
+              </div>
+              <h2 className="text-3xl font-black text-gray-900">
+                Key <span className="bg-gradient-to-r from-[#C10008] to-[#027FFF] bg-clip-text text-transparent">Features</span>
+              </h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              {product.features.map((item, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  className="flex items-center gap-3 p-4 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition group"
+                >
+                  <div className="p-2 rounded-lg" style={{ backgroundColor: `${colors.primary}10` }}>
+                    <CheckCircle2 size={20} style={{ color: colors.primary }} />
+                  </div>
+                  <span className="text-gray-700 group-hover:text-gray-900 transition">{item}</span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Technical Specifications */}
+      {product.specs && product.specs.length > 0 && (
+        <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 mb-3">
+              <Zap size={20} style={{ color: colors.secondary }} />
+              <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>
+                Technical Details
+              </span>
+            </div>
+            <h2 className="text-3xl font-black text-gray-900">
+              Technical <span className="bg-gradient-to-r from-[#C10008] to-[#027FFF] bg-clip-text text-transparent">Specifications</span>
+            </h2>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-4">
-            {product.features.map((item, i) => (
-              <div key={i} className="flex items-center gap-3 bg-white p-4 rounded-lg shadow-sm border border-primary/10">
-                <CheckCircle2 className="text-accent flex-shrink-0" size={20} />
-                <span className="text-foreground">{item}</span>
-              </div>
+            {product.specs.map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05 }}
+                className="flex items-center gap-3 p-4 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition group"
+              >
+                <div className="p-2 rounded-lg" style={{ backgroundColor: `${colors.secondary}10` }}>
+                  <CheckCircle2 size={20} style={{ color: colors.secondary }} />
+                </div>
+                <span className="text-gray-700 group-hover:text-gray-900 transition font-mono text-sm">{item}</span>
+              </motion.div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* SPECIFICATIONS */}
-      <section className="py-16 max-w-7xl mx-auto px-6">
-        <h2 className="text-3xl font-black text-foreground mb-8">Technical <span className="text-accent">Specifications</span></h2>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          {product.specs.map((item, i) => (
-            <div key={i} className="flex items-center gap-3 bg-white p-4 rounded-lg shadow-sm border border-primary/10">
-              <CheckCircle2 className="text-primary flex-shrink-0" size={20} />
-              <span className="text-foreground">{item}</span>
+      {/* Applications Section */}
+      {product.applications && product.applications.length > 0 && (
+        <section className="py-16 bg-gradient-to-r from-gray-50 to-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-2 mb-3">
+                <Truck size={20} style={{ color: colors.primary }} />
+                <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: colors.secondary }}>
+                  Common Uses
+                </span>
+              </div>
+              <h2 className="text-3xl font-black text-gray-900">
+                Popular <span className="bg-gradient-to-r from-[#C10008] to-[#027FFF] bg-clip-text text-transparent">Applications</span>
+              </h2>
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* APPLICATIONS */}
-      <section className="bg-blue-50 py-16">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl font-black text-foreground mb-8">Common <span className="text-accent">Applications</span></h2>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {product.applications.map((item, i) => (
-              <div key={i} className="bg-white p-4 rounded-lg border border-primary/20 text-center hover:border-accent hover:shadow-md transition">
-                <span className="text-foreground font-medium">{item}</span>
-              </div>
-            ))}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {product.applications.map((item, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  className="group p-4 rounded-xl bg-white border border-gray-100 text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                >
+                  <div className="w-10 h-10 mx-auto mb-2 rounded-lg flex items-center justify-center transition group-hover:scale-110" style={{ backgroundColor: `${colors.primary}10` }}>
+                    <ExternalLink size={18} style={{ color: colors.primary }} />
+                  </div>
+                  <span className="text-gray-700 font-medium group-hover:text-gray-900 transition">{item}</span>
+                </motion.div>
+              ))}
+            </div>
           </div>
+        </section>
+      )}
+
+      {/* Related Products Section Placeholder */}
+      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-black text-gray-900">
+            You Might Also <span className="bg-gradient-to-r from-[#C10008] to-[#027FFF] bg-clip-text text-transparent">Like</span>
+          </h2>
+          <p className="text-gray-500 mt-2">Discover more premium electrical components</p>
         </div>
-      </section>
-
-      {/* CTA */}
-      <section className="bg-gradient-to-r from-primary via-blue-600 to-primary py-16 text-center relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -mr-40 -mt-40" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent/20 rounded-full -ml-40 -mb-40" />
-
-        <div className="relative z-10 max-w-4xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-black text-white mb-4">Need This Product?</h2>
-          <p className="text-white/90 mb-8 text-lg">Contact us for competitive pricing, technical specifications, and bulk order discounts.</p>
-
-          <Link href="/contact" className="inline-block bg-accent text-white px-8 py-3 rounded-lg hover:bg-red-600 transition font-bold text-lg shadow-lg">
-            Contact Sales Team
+        
+        <div className="text-center">
+          <Link 
+            href="/products" 
+            className="inline-flex items-center gap-2 px-8 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
+            style={{ color: colors.secondary, backgroundColor: `${colors.secondary}10` }}
+          >
+            Browse All Products
+            <ArrowRight size={16} />
           </Link>
         </div>
       </section>
+
+      {/* Cart Modal */}
+      <Dialog open={isCartModalOpen} onOpenChange={setCartModalOpen}>
+        <DialogContent className="max-w-xl rounded-2xl">
+          <DialogHeader>
+            <div className="inline-flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-green-600">Success</span>
+            </div>
+            <DialogTitle className="text-2xl font-black">Added to Cart!</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              {qty} x {selectedVariant?.size ? `${product.name} - ${selectedVariant.size}` : product.name} has been added to your cart.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-4 rounded-xl border border-gray-100 bg-gradient-to-r from-gray-50 to-white p-4">
+            <div className="flex items-center gap-4">
+              <div className="relative h-20 w-20 rounded-xl overflow-hidden bg-white shadow-md">
+                <ProductImage src={activeImage} alt={product.name} fill className="object-cover" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-gray-900">{selectedVariant?.size ? `${product.name} - ${selectedVariant.size}` : product.name}</p>
+                <p className="text-sm text-gray-500">Quantity: {qty}</p>
+                {selectedVariant?.part_number && (
+                  <p className="text-xs text-gray-400">Part No: {selectedVariant.part_number}</p>
+                )}
+                <p className="text-lg font-bold" style={{ color: colors.primary }}>
+                  {hasPrice ? `₦${(selectedPrice * qty).toLocaleString()}` : 'Price on Request'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="mt-6 gap-3">
+            <Link 
+              href="/cart" 
+              className="inline-flex w-full justify-center items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105"
+              style={{ background: colors.gradient }}
+            >
+              View Cart
+              <ArrowRight size={16} />
+            </Link>
+            <DialogClose className="inline-flex w-full justify-center rounded-xl border-2 px-5 py-3 text-sm font-semibold transition-all duration-300 hover:scale-105"
+              style={{ borderColor: colors.secondary, color: colors.secondary }}
+            >
+              Continue Shopping
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </main>

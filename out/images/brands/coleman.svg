@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" width="300" height="80">
+  <rect width="300" height="80" fill="white"/>
+  <rect x="5" y="8" width="54" height="64" rx="3" fill="#1A237E"/>
+  <text x="32" y="34" font-family="Arial Black" font-weight="900" font-size="24" fill="white" text-anchor="middle">C</text>
+  <text x="32" y="56" font-family="Arial" font-size="9" fill="white" text-anchor="middle">CTIL</text>
+  <text x="178" y="35" font-family="Arial Black" font-weight="900" font-size="24" fill="#CC0000" text-anchor="middle">COLEMAN</text>
+  <rect x="68" y="42" width="220" height="2" fill="#1A237E"/>
+  <text x="178" y="60" font-family="Arial" font-weight="bold" font-size="13" fill="#1A237E" text-anchor="middle">WIRES AND CABLES</text>
+</svg>
