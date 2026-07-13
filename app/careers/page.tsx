@@ -1,6 +1,4 @@
- 'use client';
-
-import type { Metadata } from 'next'
+'use client';
 
 import { useState } from 'react';
 import Header from '@/components/header';
@@ -329,10 +327,4 @@ export default function CareersPage() {
       <Footer />
     </main>
   );
-}
-
-export const metadata: Metadata = {
-  title: 'Careers at Entity Ville Ltd — Join Our Team',
-  description: 'Explore career opportunities at Entity Ville Ltd — we hire sales engineers, technical sales reps, warehouse staff, and support specialists. Apply online or contact HR.',
-  alternates: { canonical: 'https://entityville.com/careers' },
 }
