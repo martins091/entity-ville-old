@@ -333,8 +333,3 @@ export default function CareersPage() {
   );
 }
 
-export const metadata: Metadata = {
-  title: 'Careers at Entity Ville Ltd — Join Our Team',
-  description: 'Explore career opportunities at Entity Ville Ltd — we hire sales engineers, technical sales reps, warehouse staff, and support specialists. Apply online or contact HR.',
-  alternates: { canonical: 'https://entityville.com/careers' },
-}
